@@ -469,12 +469,12 @@ align-items: center; /* Centers trash icon with text */
 </div>
 
 <div class="w-full mb-6 border-b pb-4" id="subject-tabs">
-    <button onclick="switchSubject('poli')" class="sub-tab-btn active" id="sub-btn-poli" data-sub="poli">Political</button>
-    <button onclick="switchSubject('lab')" class="sub-tab-btn" id="sub-btn-lab" data-sub="lab">Labor</button>
-    <button onclick="switchSubject('civ')" class="sub-tab-btn" id="sub-btn-civ" data-sub="civ">Civil</button>
-    <button onclick="switchSubject('tax')" class="sub-tab-btn" id="sub-btn-tax" data-sub="tax">Tax/Comm</button>
-    <button onclick="switchSubject('crim')" class="sub-tab-btn" id="sub-btn-crim" data-sub="crim">Criminal</button>
-    <button onclick="switchSubject('rem')" class="sub-tab-btn" id="sub-btn-rem" data-sub="rem">Remedial</button>
+    <button onclick="switchSubject('poli')" class="sub-tab-btn active" id="sub-btn-poli" data-sub="poli">Political Law</button>
+    <button onclick="switchSubject('lab')" class="sub-tab-btn" id="sub-btn-lab" data-sub="lab">Labor Law</button>
+    <button onclick="switchSubject('civ')" class="sub-tab-btn" id="sub-btn-civ" data-sub="civ">Civil Law</button>
+    <button onclick="switchSubject('tax')" class="sub-tab-btn" id="sub-btn-tax" data-sub="tax">Commercial Law</button>
+    <button onclick="switchSubject('crim')" class="sub-tab-btn" id="sub-btn-crim" data-sub="crim">Criminal Law</button>
+    <button onclick="switchSubject('rem')" class="sub-tab-btn" id="sub-btn-rem" data-sub="rem">Remedial Law</button>
 </div>
 
                 <div id="subject-notes-container" class="space-y-4"></div>
@@ -1152,7 +1152,7 @@ function toggleLinkModal(show) {
     printTemplate += `<div class="pdf-wrap">
         <div class="pdf-hdr">
             <div class="pdf-title">#AweSAMBar2026 / ${subjectName}</div>
-            <div style="font-size: 10px; font-weight: 700; color: #9ca3af; margin-top:5px;">OFFICIAL REVIEW NOTES • GENERATED ${new Date().toLocaleDateString()}</div>
+            <div style="font-size: 10px; font-weight: 700; color: #9ca3af; margin-top:5px;">REVIEW NOTES • AS OF ${new Date().toLocaleDateString()}</div>
         </div>`;
 
     let lastParent = "";
