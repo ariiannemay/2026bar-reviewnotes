@@ -37,7 +37,6 @@
         .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
         .tab-content.active { display: block; }
 
-/* START EDITING HERE */
 #subject-tabs {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Force full width expansion */
@@ -96,13 +95,44 @@
     border-color: #d8b4fe;
 }
 
-        .auto-expand {
-            font-family: 'Dancing Script', cursive; font-size: 1.25rem;
-            line-height: 1.6; padding: 1rem; width: 100%; min-height: 100px;
-            background-color: #fdfcf0; border: 1px solid #e5e7eb; border-radius: 8px;
-            resize: none; overflow: hidden; display: block;
-        }
-        
+.auto-expand {
+    font-family: 'Inter', sans-serif; /* Back to clean default */
+    font-size: 0.95rem;
+    line-height: 1.6; 
+    padding: 1rem; 
+    width: 100%; 
+    min-height: 120px;
+    background-color: #ffffff; /* Clean white */
+    border: 1px solid #e5e7eb; 
+    border-radius: 8px;
+    resize: none; 
+    overflow: hidden; 
+    display: block;
+    color: #374151;
+}
+
+/* UI for the Export Button */
+.export-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+.export-btn:hover {
+    background: #330066;
+    color: white;
+    border-color: #B266FF;
+}
+
         .todo-paper {
             background: white; background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
             background-size: 24px 24px; min-height: 600px; border-radius: 12px;
@@ -197,7 +227,6 @@
 }
 
 /* Weekly View Column Fixes */
-/* START EDITING HERE */
 .task-row {
     display: flex;
     align-items: center; /* Vertically centers checkbox, text, and trash icon */
@@ -214,7 +243,6 @@
     outline: 1px solid rgba(178, 102, 255, 0.2);
 }
 
-/* START EDITING HERE */
 .task-row textarea {
     flex: 1;
     min-width: 0;
@@ -299,7 +327,6 @@
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
 }
-/* END EDITING HERE */
 
 .task-input-small {
     font-size: 0.75rem !important;
@@ -539,8 +566,6 @@ const SUBJECTS = {
             if(tabId === 'tab-todo') renderTodoView();
         }
 
-/* START EDITING HERE */
-/* START EDITING HERE */
 function switchSubject(sub) {
     const container = document.getElementById('subject-notes-container');
     const syllabus = SUBJECTS[sub];
@@ -564,39 +589,52 @@ function switchSubject(sub) {
         }
     });
 
-    container.innerHTML = structuredSyllabus.map((mainTopic) => `
-        <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm">
-            <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
-                     style="border-color: ${getActiveThemeColor(sub)}">
-                <div class="flex flex-col text-left">
-                    <span class="uppercase tracking-wider">${mainTopic.title}</span>
-                    <span class="text-[9px] text-gray-400 font-bold">${mainTopic.subtopics.length} SUBTOPICS</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
-            </summary>
-            <div class="p-2 bg-gray-50 space-y-2">
-                ${mainTopic.subtopics.map(subTopic => `
-                    <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner">
-                        <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest text-left">
-                            ${subTopic}
-                        </label>
-                        <textarea 
-                            class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden" 
-                            placeholder="Type notes for ${subTopic}..."
-                            oninput="autoExpand(this); saveNote('${sub}', '${mainTopic.title}', '${subTopic}', this.value); updateProgress()"
-                        >${localStorage.getItem(`note_${sub}_${mainTopic.title}_${subTopic}`) || ''}</textarea>
+    const activeColor = getActiveThemeColor(sub);
+    const subjectTitle = document.getElementById('sub-btn-' + sub).innerText.split('(')[0].trim();
+
+    // The logic below adds the Export Header and then the nested Syllabus folders
+    container.innerHTML = `
+        <div class="flex justify-between items-center mb-4 px-2">
+            <h3 class="header-font text-xl tracking-widest text-[#330066]">${subjectTitle} NOTES</h3>
+            <button onclick="exportSubjectNotes('${sub}')" class="export-btn">
+                <i data-lucide="file-text" class="w-3 h-3"></i> Export PDF
+            </button>
+        </div>
+        <div id="notes-list-wrapper">
+            ${structuredSyllabus.map((mainTopic) => `
+                <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm">
+                    <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
+                             style="border-color: ${activeColor}">
+                        <div class="flex flex-col text-left">
+                            <span class="uppercase tracking-wider">${mainTopic.title}</span>
+                            <span class="text-[9px] text-gray-400 font-bold">${mainTopic.subtopics.length} SUBTOPICS</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-2 bg-gray-50 space-y-2">
+                        ${mainTopic.subtopics.map(subTopic => `
+                            <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner text-left">
+                                <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest">
+                                    ${subTopic}
+                                </label>
+                                <textarea 
+                                    class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden" 
+                                    placeholder="Type notes for ${subTopic}..."
+                                    oninput="autoExpand(this); saveNote('${sub}', '${mainTopic.title}', '${subTopic}', this.value); updateProgress()"
+                                >${localStorage.getItem(`note_${sub}_${mainTopic.title}_${subTopic}`) || ''}</textarea>
+                            </div>
+                        `).join('')}
                     </div>
-                `).join('')}
-            </div>
-        </details>
-    `).join('');
+                </details>
+            `).join('')}
+        </div>
+    `;
 
     lucide.createIcons();
     updateProgress();
     setTimeout(() => { document.querySelectorAll('.auto-expand').forEach(autoExpand); }, 50);
 }
 
-/* START EDITING HERE */
 function updateProgress() {
     let totalSubtopics = 0;
     let completedSubtopics = 0;
@@ -666,7 +704,6 @@ function saveNote(sub, mainTopic, subTopic, val) {
         // Storage structure: { "date_string": [{text: "...", done: false}] }
         let todoStorage = JSON.parse(localStorage.getItem('bar_todos_v2')) || {};
 
-/* START EDITING HERE: switchTodoMode logic fix */
 function switchTodoMode(mode) {
     todoMode = mode;
     document.querySelectorAll('.todo-mode-btn').forEach(b => {
@@ -680,7 +717,6 @@ const activeBtn = document.getElementById(`todo-btn-${mode}`);
     }
     renderTodoView();
 }
-/* END EDITING HERE */
 
         function navigateTodo(dir) {
             todoOffset += dir;
@@ -740,7 +776,7 @@ if (todoMode === 'daily') {
                 ${calendarHtml}
             </div>`;
     } else {
-/* END EDITING HERE */
+
         title.innerText = "WEEKLY GOALS";
         const startOfWeek = new Date(baseDate);
         startOfWeek.setDate(baseDate.getDate() - baseDate.getDay() + (todoOffset * 7));
@@ -751,8 +787,7 @@ if (todoMode === 'daily') {
         dateDisplay.innerText = `${startOfWeek.toLocaleDateString('en-US', options)} - ${endOfWeek.toLocaleDateString('en-US', options)}`;
 
 let gridHtml = `<div class="flex gap-4 min-w-[1000px]">`;
-/* START EDITING HERE */
-// Update the loop in renderTodoView()
+
 for (let i = 0; i < 7; i++) {
 const dayDate = new Date(startOfWeek);
             dayDate.setDate(startOfWeek.getDate() + i);
@@ -841,8 +876,7 @@ function generateMiniCal(monthDate, selectedDate) {
     return html;
 }
 
-/* START EDITING HERE */
-function renderTaskList(dateKey, sizeClass) {
+    function renderTaskList(dateKey, sizeClass) {
     const tasks = todoStorage[dateKey] || [];
     const inputClass = sizeClass === 'large' ? 'task-input-large' : 'task-input-small';
     const iconSize = sizeClass === 'large' ? 'w-5 h-5' : 'w-3.5 h-3.5';
@@ -866,7 +900,6 @@ function renderTaskList(dateKey, sizeClass) {
         </div>
     `).join('');
 }
-/* END EDITING HERE *//* END EDITING HERE */
 
         function addTodoItem(dateKey) {
             if (!todoStorage[dateKey]) todoStorage[dateKey] = [];
@@ -972,7 +1005,6 @@ function deleteLink(index, e) {
     );
 }
 
-/* START EDITING HERE */
 function renderLinks() {
     const container = document.getElementById('links-grid');
     container.innerHTML = userLinks.map((link, i) => `
@@ -993,9 +1025,8 @@ function renderLinks() {
     `).join('');
     lucide.createIcons();
 }
-/* END EDITING HERE */
-
-        // --- INITIALIZE ---
+ 
+// --- INITIALIZE ---
         window.onload = () => {
             switchSubject('poli');
             renderTodoView();
@@ -1039,7 +1070,6 @@ function closeThemedModal() {
     container.classList.remove('flex');
 }
 
-/* START EDITING HERE */
 let editingLinkIndex = null; // Tracks if we are editing or adding new
 
 function editLink(index, e) {
@@ -1095,9 +1125,59 @@ function toggleLinkModal(show) {
         editingLinkIndex = null; // Reset if closed
     }
 }
-/* END EDITING HERE */
 
-    </script>
+    function exportSubjectNotes(sub) {
+    const syllabus = SUBJECTS[sub];
+    const btn = document.getElementById('sub-btn-' + sub);
+    const subjectName = btn ? btn.innerText.split('(')[0].trim() : sub.toUpperCase();
+    const themeColor = getActiveThemeColor(sub);
+    
+    const printWindow = window.open('', '_blank');
+    
+    // Using a single variable for the style and content to avoid browser "tag confusion"
+    let printTemplate = `<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap');
+        .pdf-wrap { font-family: 'Inter', sans-serif; padding: 50px; color: #1f2937; }
+        .pdf-hdr { border-bottom: 4px solid ${themeColor}; margin-bottom: 30px; padding-bottom: 10px; }
+        .pdf-title { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: ${themeColor}; text-transform: uppercase; }
+        .topic-grp { background: ${themeColor}10; color: ${themeColor}; padding: 8px 12px; border-radius: 4px; font-weight: 900; margin-top: 30px; text-transform: uppercase; font-size: 13px; border-left: 4px solid ${themeColor}; }
+        .note-box { margin: 15px 0 25px 15px; padding-left: 15px; border-left: 1px solid #e5e7eb; }
+        .note-lbl { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; }
+        .note-body { white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+    </style>`;
+
+    printTemplate += `<div class="pdf-wrap">
+        <div class="pdf-hdr">
+            <div class="pdf-title">#AweSAMBar2026 / ${subjectName}</div>
+            <div style="font-size: 10px; font-weight: 700; color: #9ca3af; margin-top:5px;">OFFICIAL REVIEW NOTES • GENERATED ${new Date().toLocaleDateString()}</div>
+        </div>`;
+
+    let lastParent = "";
+    syllabus.forEach(item => {
+        if (item.depth === 1) {
+            lastParent = item.topic;
+            printTemplate += `<div class="topic-grp">${item.topic}</div>`;
+        } else if (item.depth === 2) {
+            const savedNote = localStorage.getItem(`note_${sub}_${lastParent}_${item.topic}`) || "No notes recorded.";
+            printTemplate += `
+                <div class="note-box">
+                    <div class="note-lbl">${item.topic}</div>
+                    <div class="note-body">${savedNote}</div>
+                </div>`;
+        }
+    });
+
+    printTemplate += `<div style="margin-top:50px; text-align:center; font-size:10px; color:#9ca3af; border-top:1px solid #eee; padding-top:20px;">Generated via #AweSAMBar2026 Tracker.</div></div>`;
+
+    printWindow.document.write(printTemplate);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+        printWindow.print();
+    }, 500);
+}
+
+</script>
 
 <div id="themed-modal-container" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[200] p-4">
     <div id="themed-modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden modal-animate-in border border-purple-100">
