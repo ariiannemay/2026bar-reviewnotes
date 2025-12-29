@@ -188,7 +188,27 @@
         min-height: 600px;
     }
 
-    .task-input-large { font-size: 1.25rem; font-weight: 700; color: var(--color-primary-dark); }
+
+/* START EDITING HERE */
+.task-input-small {
+    font-size: 9px !important; 
+    font-weight: 600;
+    line-height: 1.2;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    flex: 1;
+    min-width: 0;
+    height: auto;
+}
+
+.task-input-large { 
+    font-size: 14px !important; 
+    font-weight: 700; 
+    color: var(--color-primary-dark); 
+}
+/* END EDITING HERE */
+
 
     .mini-calendar-sidebar { border-left: 1px dashed #e5e7eb; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
     .weekly-calendar-footer { display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; }
@@ -232,9 +252,9 @@
 /* Weekly View Column Fixes */
 .task-row {
     display: flex;
-    align-items: center; /* Vertically centers checkbox, text, and trash icon */
-    gap: 0.75rem;
-    padding: 0.5rem 0.5rem;
+    align-items: center; 
+    gap: 0.5rem; /* Reduced gap */
+    padding: 0.25rem 0.5rem; /* Reduced vertical padding */
     border-bottom: 1px dashed #e5e7eb;
     width: 100%;
     transition: all 0.2s;
@@ -260,14 +280,7 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     height: auto; 
-}
-
-.task-row textarea {
     width: 100%;
-    white-space: pre-wrap;       /* Allows wrapping */
-    word-wrap: break-word;      /* Breaks long words */
-    overflow-wrap: break-word;
-    display: block;
 }
 
 .day-pill-header {
@@ -329,18 +342,6 @@
     border: solid white;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
-}
-
-.task-input-small {
-    font-size: 0.75rem !important;
-    font-weight: 600;
-    line-height: 1.2;
-    word-wrap: break-word;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    flex: 1;
-    min-width: 0;
-    height: auto; /* Ensure height can grow */
 }
 .task-actions {
     display: flex;
@@ -1170,7 +1171,7 @@ function toggleLinkModal(show) {
         }
     });
 
-    printTemplate += `<div style="margin-top:50px; text-align:center; font-size:10px; color:#9ca3af; border-top:1px solid #eee; padding-top:20px;">Generated via #AweSAMBar2026 Tracker (2026bar-reviewtracker.vercel.app).</div></div>`;
+    printTemplate += `<div style="margin-top:50px; text-align:center; font-size:10px; color:#9ca3af; border-top:1px solid #eee; padding-top:20px;">Generated via #AweSAMBar2026 Tracker.</div></div>`;
 
     printWindow.document.write(printTemplate);
     printWindow.document.close();
