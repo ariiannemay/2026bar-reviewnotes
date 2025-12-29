@@ -1288,6 +1288,7 @@ function exportSubjectNotes(sub) {
         
         printTemplate += `<div style="${depthStyle}">${item.topic}</div>`;
         
+/* START EDITING HERE */
         if (isNote) {
             let path = [];
             let currentD = item.depth;
@@ -1300,7 +1301,24 @@ function exportSubjectNotes(sub) {
             const key = `note_${sub}_${path.join('_')}_${item.topic}`;
             const noteContent = localStorage.getItem(key) || "<i>No notes recorded.</i>";
             
-            printTemplate += `<div style="white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: #1f2937; margin: 8px 0 25px ${indent + 25}px; padding-left: 12px; border-left: 2px solid #e5e7eb;">${noteContent}</div>`;
+            // Fix: Use 'display: block' and a cleaner margin-left to prevent text squishing
+            printTemplate += `
+                <div style="
+                    display: block;
+                    white-space: pre-wrap; 
+                    font-size: 13px; 
+                    line-height: 1.6; 
+                    color: #1f2937; 
+                    margin-top: 5px;
+                    margin-bottom: 25px;
+                    margin-left: ${indent + 25}px; 
+                    padding-left: 15px; 
+                    border-left: 2px solid #e5e7eb; 
+                    font-family: 'Inter', sans-serif;
+                    max-width: 85%;
+                ">
+                    ${noteContent}
+                </div>`;
         }
     });
 
