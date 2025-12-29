@@ -1267,30 +1267,31 @@ function exportSubjectNotes(sub) {
             .replace(/'/g, '&#039;');
     }
 
-    let printTemplate = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>${subjectName} Notes</title>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
-            <style>
-                @page {
-                    margin: 1in; /* Adjust as needed (e.g., 0.75in for smaller margins) */
-                    size: letter portrait; /* Or A4 if preferred */
-                }
-                body {
-                    margin: 0;
-                    padding: 0.5in; /* Inner padding for content */
-                    font-family: 'Inter', sans-serif;
-                    color: #1a1a1a;
-                }
-                /* Add page breaks for sections if content is very long */
-                .section-break { page-break-before: always; }
-                /* Your existing styles can go here if needed */
-            </style>
-        </head>
-        <body>
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${subjectName} Review Notes</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+        <style>
+            @page {
+                margin: 0.5cm;  /* Small consistent margins - adjust to 0.3cm or 0 for almost none */
+                size: A4 portrait;  /* Or "letter" if preferred */
+            }
+            body {
+                margin: 0;
+                padding: 1cm;  /* Optional inner content padding so text doesn't touch absolute edge */
+                font-family: 'Inter', sans-serif;
+                color: #1a1a1a;
+            }
+            /* Hide any default headers/footers */
+            @media print {
+                body { -webkit-print-color-adjust: exact; }
+            }
+        </style>
+    </head>
+    <body>
             <div style="border-bottom: 5px solid ${themeColor}; margin-bottom: 30px; padding-bottom: 10px;">
                 <div style="font-family: 'Bebas Neue', cursive; font-size: 36px; color: ${themeColor}; letter-spacing: 2px; line-height: 1;">
                     #AweSAMBar2026 • ${subjectName}
