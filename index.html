@@ -588,33 +588,78 @@ const SUBJECTS = {
             if(tabId === 'tab-todo') renderTodoView();
         }
 
+/* START EDITING HERE */
 function switchSubject(sub) {
     const container = document.getElementById('subject-notes-container');
     const syllabus = SUBJECTS[sub];
-    
     if (!container || !syllabus || syllabus.length === 0) return;
 
+    // Update Tab UI
     document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById('sub-btn-' + sub);
     if (activeBtn) activeBtn.classList.add('active');
-    
-    // Group logic items into Depth 1 (Folders) and Depth 2 (Notes)
-    const structuredSyllabus = [];
-    let currentParent = null;
-
-    syllabus.forEach(item => {
-        if (item.depth === 1) {
-            currentParent = { title: item.topic, subtopics: [] };
-            structuredSyllabus.push(currentParent);
-        } else if (item.depth === 2 && currentParent) {
-            currentParent.subtopics.push(item.topic);
-        }
-    });
 
     const activeColor = getActiveThemeColor(sub);
-    const subjectTitle = document.getElementById('sub-btn-' + sub).innerText.split('(')[0].trim();
+    const subjectTitle = activeBtn.innerText.split('(')[0].trim();
 
-    // The logic below adds the Export Header and then the nested Syllabus folders
+    // Helper: Find the path of parents for a specific index to create unique save keys
+    function getParentPath(index) {
+        let path = [];
+        let currentDepth = syllabus[index].depth;
+        for (let i = index - 1; i >= 0; i--) {
+            if (syllabus[i].depth < currentDepth) {
+                path.unshift(syllabus[i].topic);
+                currentDepth = syllabus[i].depth;
+            }
+        }
+        return path.join('_');
+    }
+
+    // Recursive function to build the nested HTML string
+    function buildHierarchy(startIndex) {
+        let html = '';
+        for (let i = startIndex; i < syllabus.length; i++) {
+            // Check if we've moved back up to a shallower level (stop recursion)
+            if (startIndex > 0 && syllabus[i].depth <= syllabus[startIndex - 1].depth) break;
+            
+            // Peek at next item to see if current item is a Parent or a Note leaf
+            const isParent = (i + 1 < syllabus.length && syllabus[i+1].depth > syllabus[i].depth);
+            const indentClass = syllabus[i].depth > 1 ? 'ml-3 border-l border-gray-100 pl-2' : '';
+            const parentPath = getParentPath(i);
+
+            if (isParent) {
+                // If it's a parent, create a collapsible container
+                html += `
+                    <details class="group bg-white rounded-lg border border-gray-200 overflow-hidden mb-2 ${indentClass}">
+                        <summary class="p-3 font-bold text-xs text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none" 
+                                 style="${syllabus[i].depth === 1 ? 'border-left: 4px solid ' + activeColor : ''}">
+                            <span class="uppercase tracking-wider">${syllabus[i].topic}</span>
+                            <i data-lucide="chevron-down" class="w-3 h-3 transition-transform group-open:rotate-180 opacity-40"></i>
+                        </summary>
+                        <div class="p-1 bg-gray-50/50">
+                            ${buildHierarchy(i + 1)} 
+                        </div>
+                    </details>`;
+                
+                // Skip the children we just processed in the recursion
+                while (i + 1 < syllabus.length && syllabus[i+1].depth > syllabus[i].depth) { i++; }
+            } else {
+                // If it's a leaf (no children), it's the Note slot
+                const storageKey = `note_${sub}_${parentPath}_${syllabus[i].topic}`;
+                html += `
+                    <div class="bg-white p-3 rounded-md border border-purple-50 shadow-inner mb-2 ${indentClass}">
+                        <label class="block text-[9px] font-black text-[#B266FF] uppercase mb-1 tracking-widest">${syllabus[i].topic}</label>
+                        <textarea 
+                            class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden text-[13px] leading-relaxed" 
+                            placeholder="Take notes..."
+                            oninput="autoExpand(this); saveNoteRecursive('${storageKey}', this.value); updateProgress()"
+                        >${localStorage.getItem(storageKey) || ''}</textarea>
+                    </div>`;
+            }
+        }
+        return html;
+    }
+
     container.innerHTML = `
         <div class="flex justify-between items-center mb-4 px-2">
             <h3 class="header-font text-xl tracking-widest text-[#330066]">${subjectTitle} NOTES</h3>
@@ -623,32 +668,7 @@ function switchSubject(sub) {
             </button>
         </div>
         <div id="notes-list-wrapper">
-            ${structuredSyllabus.map((mainTopic) => `
-                <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm">
-                    <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
-                             style="border-color: ${activeColor}">
-                        <div class="flex flex-col text-left">
-                            <span class="uppercase tracking-wider">${mainTopic.title}</span>
-                            <span class="text-[9px] text-gray-400 font-bold">${mainTopic.subtopics.length} SUBTOPICS</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
-                    </summary>
-                    <div class="p-2 bg-gray-50 space-y-2">
-                        ${mainTopic.subtopics.map(subTopic => `
-                            <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner text-left">
-                                <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest">
-                                    ${subTopic}
-                                </label>
-                                <textarea 
-                                    class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden" 
-                                    placeholder="Type notes for ${subTopic}..."
-                                    oninput="autoExpand(this); saveNote('${sub}', '${mainTopic.title}', '${subTopic}', this.value); updateProgress()"
-                                >${localStorage.getItem(`note_${sub}_${mainTopic.title}_${subTopic}`) || ''}</textarea>
-                            </div>
-                        `).join('')}
-                    </div>
-                </details>
-            `).join('')}
+            ${buildHierarchy(0)}
         </div>
     `;
 
@@ -656,6 +676,12 @@ function switchSubject(sub) {
     updateProgress();
     setTimeout(() => { document.querySelectorAll('.auto-expand').forEach(autoExpand); }, 50);
 }
+
+// Simple helper to save with the pre-built key
+function saveNoteRecursive(key, val) {
+    localStorage.setItem(key, val);
+}
+
 
 function updateProgress() {
     let totalSubtopics = 0;
@@ -1194,56 +1220,44 @@ function toggleLinkModal(show) {
     }
 }
 
-    function exportSubjectNotes(sub) {
+/* START EDITING HERE */
+function exportSubjectNotes(sub) {
     const syllabus = SUBJECTS[sub];
-    const btn = document.getElementById('sub-btn-' + sub);
-    const subjectName = btn ? btn.innerText.split('(')[0].trim() : sub.toUpperCase();
     const themeColor = getActiveThemeColor(sub);
-    
     const printWindow = window.open('', '_blank');
     
-    // Using a single variable for the style and content to avoid browser "tag confusion"
     let printTemplate = `<style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap');
-        .pdf-wrap { font-family: 'Inter', sans-serif; padding: 50px; color: #1f2937; }
-        .pdf-hdr { border-bottom: 4px solid ${themeColor}; margin-bottom: 30px; padding-bottom: 10px; }
-        .pdf-title { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: ${themeColor}; text-transform: uppercase; }
-        .topic-grp { background: ${themeColor}10; color: ${themeColor}; padding: 8px 12px; border-radius: 4px; font-weight: 900; margin-top: 30px; text-transform: uppercase; font-size: 13px; border-left: 4px solid ${themeColor}; }
-        .note-box { margin: 15px 0 25px 15px; padding-left: 15px; border-left: 1px solid #e5e7eb; }
-        .note-lbl { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; }
-        .note-body { white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
-    </style>`;
+        .pdf-wrap { font-family: 'Inter', sans-serif; padding: 40px; color: #1f2937; }
+        .depth-1 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: ${themeColor}; margin-top: 30px; border-bottom: 2px solid ${themeColor}20; }
+        .depth-2 { font-weight: 900; font-size: 14px; margin-top: 15px; text-transform: uppercase; color: #4b5563; }
+        .depth-3 { font-weight: 800; font-size: 12px; margin-top: 10px; color: #6b7280; }
+        .depth-4, .depth-5 { font-weight: 700; font-size: 11px; margin-top: 8px; font-style: italic; }
+        .note-body { white-space: pre-wrap; font-size: 12px; line-height: 1.6; margin: 5px 0 15px 20px; padding-left: 10px; border-left: 1px solid #eee; }
+    </style><div class="pdf-wrap">`;
 
-    printTemplate += `<div class="pdf-wrap">
-        <div class="pdf-hdr">
-            <div class="pdf-title">#AweSAMBar2026 / ${subjectName}</div>
-            <div style="font-size: 10px; font-weight: 700; color: #9ca3af; margin-top:5px;">REVIEW NOTES • AS OF ${new Date().toLocaleDateString()}</div>
-        </div>`;
-
-    let lastParent = "";
-    syllabus.forEach(item => {
-        if (item.depth === 1) {
-            lastParent = item.topic;
-            printTemplate += `<div class="topic-grp">${item.topic}</div>`;
-        } else if (item.depth === 2) {
-            const savedNote = localStorage.getItem(`note_${sub}_${lastParent}_${item.topic}`) || "No notes recorded.";
-            printTemplate += `
-                <div class="note-box">
-                    <div class="note-lbl">${item.topic}</div>
-                    <div class="note-body">${savedNote}</div>
-                </div>`;
+    syllabus.forEach((item, i) => {
+        const isNote = !(i + 1 < syllabus.length && syllabus[i+1].depth > item.depth);
+        const indent = (item.depth - 1) * 15;
+        
+        printTemplate += `<div class="depth-${item.depth}" style="margin-left: ${indent}px">${item.topic}</div>`;
+        
+        if (isNote) {
+            // Re-calculate the key path exactly like the UI logic
+            let path = []; let d = item.depth;
+            for(let j=i-1; j>=0; j--) { if(syllabus[j].depth < d) { path.unshift(syllabus[j].topic); d = syllabus[j].depth; } }
+            const key = `note_${sub}_${path.join('_')}_${item.topic}`;
+            const note = localStorage.getItem(key) || "<i>No notes.</i>";
+            printTemplate += `<div class="note-body" style="margin-left: ${indent + 20}px">${note}</div>`;
         }
     });
 
-    printTemplate += `<div style="margin-top:50px; text-align:center; font-size:10px; color:#9ca3af; border-top:1px solid #eee; padding-top:20px;">Generated via #AweSAMBar2026 Tracker.</div></div>`;
-
+    printTemplate += `</div>`;
     printWindow.document.write(printTemplate);
     printWindow.document.close();
-    
-    setTimeout(() => {
-        printWindow.print();
-    }, 500);
+    setTimeout(() => { printWindow.print(); }, 500);
 }
+
 
 </script>
 
