@@ -1292,7 +1292,7 @@ function exportSubjectNotes(sub) {
         </head>
         <body>
             <div style="border-bottom: 5px solid ${themeColor}; margin-bottom: 30px; padding-bottom: 10px;">
-                <div style="font-family: 'Bebas Neue', cursive; font-size: 48px; color: ${themeColor}; letter-spacing: 2px; line-height: 1;">
+                <div style="font-family: 'Bebas Neue', cursive; font-size: 36px; color: ${themeColor}; letter-spacing: 2px; line-height: 1;">
                     #AweSAMBar2026 • ${subjectName}
                 </div>
                 <div style="font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; margin-top: 5px;">
@@ -1318,44 +1318,60 @@ function exportSubjectNotes(sub) {
         
         printTemplate += `<div style="${depthStyle}">${item.topic}</div>`;
         
-        if (isNote) {
-            let path = [];
-            let currentD = item.depth;
-            for (let j = i - 1; j >= 0; j--) {
-                if (syllabus[j].depth < currentD) {
-                    path.unshift(syllabus[j].topic);
-                    currentD = syllabus[j].depth;
-                }
-            }
-            const key = `note_${sub}_${path.join('_')}_${item.topic}`;
-            let noteContent = localStorage.getItem(key) || "<i>No notes recorded.</i>";
-            
-            // Escape the content to prevent HTML injection
-            noteContent = escapeHtml(noteContent);
-
-            printTemplate += `
-                <div style="
-                    display: block;
-                    width: auto;
-                    margin-left: ${indent + 20}px; 
-                    margin-top: 5px;
-                    margin-bottom: 25px;
-                    padding-left: 15px; 
-                    border-left: 2px solid #e5e7eb; 
-                    font-family: 'Inter', sans-serif;
-                ">
-                    <div style="
-                        white-space: pre-wrap; 
-                        font-size: 13px; 
-                        line-height: 1.6; 
-                        color: #1f2937; 
-                        word-wrap: break-word;
-                        overflow-wrap: break-word;
-                    ">
-                        ${noteContent}
-                    </div>
-                </div>`;
+if (isNote) {
+    let path = [];
+    let currentD = item.depth;
+    for (let j = i - 1; j >= 0; j--) {
+        if (syllabus[j].depth < currentD) {
+            path.unshift(syllabus[j].topic);
+            currentD = syllabus[j].depth;
         }
+    }
+    const key = `note_${sub}_${path.join('_')}_${item.topic}`;
+    let rawNote = localStorage.getItem(key);
+    const isEmpty = !rawNote || rawNote.trim() === "";
+
+    let noteContent;
+    let textAlign = isEmpty ? "center" : "justify";
+    let color = isEmpty ? "#9ca3af" : "#1f2937";
+    let fontStyle = isEmpty ? "italic" : "normal";
+    let paddingVertical = isEmpty ? "20px 0" : "8px 0";
+
+    if (isEmpty) {
+        noteContent = "No notes recorded.";
+    } else {
+        // Only escape when there is actual user input
+        noteContent = escapeHtml(rawNote);
+    }
+
+    printTemplate += `
+        <div style="
+            display: block;
+            width: auto;
+            margin-left: ${indent + 20}px; 
+            margin-top: 5px;
+            margin-bottom: 25px;
+            padding-left: 15px; 
+            border-left: 2px solid #e5e7eb; 
+            font-family: 'Inter', sans-serif;
+        ">
+            <div style="
+                white-space: pre-wrap; 
+                font-size: 13px; 
+                line-height: 1.7; 
+                color: ${color};
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                text-align: ${textAlign};
+                text-align-last: left;
+                hyphens: auto;
+                font-style: ${fontStyle};
+                padding: ${paddingVertical};
+            ">
+                ${noteContent}
+            </div>
+        </div>`;
+}
     });
 
     // FOOTER: Bebas Neue
