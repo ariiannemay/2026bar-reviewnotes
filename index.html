@@ -520,74 +520,16 @@ align-items: center; /* Centers trash icon with text */
         lucide.createIcons();
 
         // --- REVIEW NOTES LOGIC ---
+/* START EDITING HERE */
 const SUBJECTS = {
-    poli: [
-        "I. BASIC CONCEPTS",
-        "II. NATIONAL TERRITORY",
-        "III. CITIZENSHIP",
-        "IV. LEGISLATIVE DEPARTMENT",
-        "V. EXECUTIVE DEPARTMENT",
-        "VI. JUDICIAL DEPARTMENT",
-        "VII. CONSTITUTIONAL COMMISSIONS",
-        "VIII. CONSTITUTIONAL RIGHTS",
-        "IX. NATIONAL ECONOMY AND PATRIMONY",
-        "X. ADMINISTRATIVE LAW",
-        "XI. LAW ON PUBLIC OFFICERS",
-        "XII. ELECTION LAW",
-        "XIII. LOCAL GOVERNMENTS",
-        "XIV. PUBLIC INTERNATIONAL LAW"
-    ],
-    lab: [
-        "I. BASIC PRINCIPLES AND CONCEPTS",
-        "II. RECRUITMENT AND PLACEMENT",
-        "III. EMPLOYMENT RELATIONSHIP",
-        "IV. LABOR STANDARDS",
-        "V. LABOR RELATIONS",
-        "VI. SUSPENSION AND TERMINATION OF EMPLOYMENT",
-        "VII. SOCIAL LEGISLATION",
-        "VIII. LABOR ADJUDICATION-JURISDICTION & REMEDIES"
-    ],
-    civ: [
-        "I. EFFECT AND APPLICATION OF LAWS",
-        "II. PERSONS",
-        "III. FAMILY CODE",
-        "IV. CIVIL REGISTER",
-        "V. PROPERTY, OWNERSHIP, AND ITS MODIFICATIONS",
-        "VI. LAND TITLES AND DEEDS",
-        "VII. SUCCESSION",
-        "VIII. OBLIGATIONS AND CONTRACTS",
-        "IX. SPECIAL CONTRACTS",
-        "X. QUASI-CONTRACTS",
-        "XI. TORTS AND QUASI-DELICTS",
-        "XII. DAMAGES"
-    ],
-    tax: [ // Based on Commercial and Taxation Laws
-        "I. BUSINESS ORGANIZATIONS",
-        "II. INSURANCE",
-        "III. TRANSPORTATION",
-        "IV. BANKING",
-        "V. INTELLECTUAL PROPERTY",
-        "VI. SPECIAL COMMERCIAL LAWS",
-        "VII. TAXATION LAW"
-    ],
-    crim: [
-        "I. FUNDAMENTAL PRINCIPLES",
-        "II. FELONIES AND CRIMINAL LIABILITY",
-        "III. CRIMES AND THEIR PENALTIES"
-    ],
-    rem: [
-        "I. GENERAL PRINCIPLES",
-        "II. JURISDICTION",
-        "III. CIVIL PROCEDURE",
-        "IV. PROVISIONAL REMEDIES",
-        "V. SPECIAL CIVIL ACTIONS",
-        "VI. SPECIAL PROCEEDINGS AND WRITS",
-        "VII. CRIMINAL PROCEDURE",
-        "VIII. EVIDENCE",
-        "IX. LEGAL AND JUDICIAL ETHICS",
-        "X. PRACTICAL EXERCISES"
-    ]
+    poli: typeof POLI_SYLLABUS !== 'undefined' ? POLI_SYLLABUS : [],
+    lab: typeof LAB_SYLLABUS !== 'undefined' ? LAB_SYLLABUS : [],
+    civ: typeof CIV_SYLLABUS !== 'undefined' ? CIV_SYLLABUS : [],
+    tax: typeof COMM_TAX_SYLLABUS !== 'undefined' ? COMM_TAX_SYLLABUS : [],
+    crim: typeof CRIM_SYLLABUS !== 'undefined' ? CRIM_SYLLABUS : [],
+    rem: typeof REM_ETHICS_SYLLABUS !== 'undefined' ? REM_ETHICS_SYLLABUS : []
 };
+/* END EDITING HERE */
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -602,14 +544,17 @@ function switchSubject(sub) {
     const container = document.getElementById('subject-notes-container');
     const syllabus = SUBJECTS[sub];
     
-    if (!container || !syllabus) return;
+    if (!container || !syllabus || syllabus.length === 0) {
+        container.innerHTML = `<p class="p-4 text-center text-gray-400">No syllabus data found for ${sub}. Check if your .js files are linked correctly.</p>`;
+        return;
+    }
 
-    // Update Tab UI active states
+    // Update Tab UI
     document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById('sub-btn-' + sub);
     if (activeBtn) activeBtn.classList.add('active');
     
-    // Group flat syllabus array into Depth 1 (folders) and Depth 2 (note slots)
+    // Group flat list into Depth 1 (folders) and Depth 2 (note slots)
     const structuredSyllabus = [];
     let currentParent = null;
 
@@ -622,7 +567,7 @@ function switchSubject(sub) {
         }
     });
 
-    // Build the nested UI
+    // Render the nested UI
     container.innerHTML = structuredSyllabus.map((mainTopic) => `
         <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm">
             <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
@@ -653,7 +598,7 @@ function switchSubject(sub) {
     lucide.createIcons();
     updateProgress();
     setTimeout(() => { document.querySelectorAll('.auto-expand').forEach(autoExpand); }, 50);
-}
+}            
 
 function updateProgress() {
     let totalSubtopics = 0;
