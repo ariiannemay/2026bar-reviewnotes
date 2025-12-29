@@ -534,7 +534,7 @@ align-items: center; /* Centers trash icon with text */
 <div id="tab-links" class="tab-content">
     <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 min-h-[700px]">
         <div class="header-bg p-4 rounded-lg mb-6 flex justify-between items-center">
-            <h2 class="header-font text-2xl text-white tracking-widest uppercase">Resource Dashboard</h2>
+            <h2 class="header-font text-2xl text-white tracking-widest uppercase">Resource Links</h2>
             <button onclick="toggleLinkModal(true)" class="bg-[#B266FF] text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase hover:scale-105 transition-all">
                 + Add New Link
             </button>
@@ -803,7 +803,7 @@ const dateKey = viewingDate.toDateString();
     const tasks = todoStorage[dateKey] || [];
 
 if (todoMode === 'daily') {
-        title.innerText = "DAILY AGENDA";
+        title.innerText = "DAILY TASKS";
         dateDisplay.innerText = viewingDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         
         let calendarHtml = '<div class="mini-calendar-sidebar">';
@@ -828,7 +828,7 @@ if (todoMode === 'daily') {
             </div>`;
     } else {
 
-title.innerText = "WEEKLY GOALS";
+title.innerText = "WEEKLY TASKS";
         const baseDate = new Date();
         // Correct math: add the total day offset, THEN find the start of THAT week
         const viewingDate = new Date(baseDate);
