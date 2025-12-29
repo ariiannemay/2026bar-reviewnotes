@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review & To-Do Module Integration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+<script src="poli_logic.js"></script>
+<script src="lab_logic.js"></script>
+<script src="civ_logic.js"></script>
+<script src="comm_logic.js"></script>
+<script src="crim_logic.js"></script>
+<script src="rem_logic.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&family=Dancing+Script:wght@600&display=swap');
+
+        :root {
+            --color-primary-dark: #330066; 
+            --color-secondary-gold: #B266FF; 
+            --color-light-bg: #F4F7F9;
+        }
+
+        body { background-color: var(--color-light-bg); font-family: 'Inter', sans-serif; }
+        .header-font { font-family: 'Bebas Neue', sans-serif; letter-spacing: .1em; }
+        .header-bg { background-color: #330066; border-bottom: 5px solid #B266FF; }
+
+        .tab-btn {
+            transition: all 0.2s; font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 0.05em; font-size: 0.8rem; border: none !important;
+        }
+        .tab-btn.active {
+            color: white !important; background-color: #330066 !important;
+            border-bottom: 2px solid #B266FF !important;
+        }
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+
+/* START EDITING HERE */
+#subject-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Force full width expansion */
+    gap: 0.5rem;
+    width: 100%;
+}
+
+/* --- SUBJECT SPECIFIC TABS --- */
+.sub-tab-btn[data-sub="poli"].active { background-color: #795548 !important; border-color: #795548 !important; }
+.sub-tab-btn[data-sub="civ"].active { background-color: #1e3a8a !important; border-color: #3b82f6 !important; }
+.sub-tab-btn[data-sub="rem"].active { background-color: #674ea7 !important; border-color: #8b5cf6 !important; }
+.sub-tab-btn[data-sub="lab"].active { background-color: #38761d !important; border-color: #38761d !important; }
+.sub-tab-btn[data-sub="tax"].active { background-color: #eab308 !important; border-color: #eab308 !important; }
+.sub-tab-btn[data-sub="crim"].active { background-color: #b33a3a !important; border-color: #ef4444 !important; }
+
+/* Master Progress Bar Styling */
+#master-progress-wrapper {
+    background: #e5e7eb;
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    border: 1px solid #d1d5db;
+}
+#master-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #330066, #B266FF);
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sub-tab-btn {
+    width: 100%;
+    font-size: 0.75rem; 
+    font-weight: 800; 
+    text-transform: uppercase;
+    padding: 10px 4px; 
+    border-radius: 8px; 
+    transition: all 0.2s;
+    border: 1px solid #e5e7eb; 
+    background: white; 
+    color: #4b5563;
+    text-align: center;
+}
+
+/* Match the color coding of your #AweSAMBar2026 brand */
+.sub-tab-btn.active { 
+    background: var(--color-primary-dark); /* #330066 */
+    color: white; 
+    border-color: var(--color-secondary-gold); /* #B266FF */
+    box-shadow: 0 4px 6px -1px rgba(178, 102, 255, 0.2);
+}
+
+.sub-tab-btn:hover:not(.active) {
+    background: #f3e8ff;
+    border-color: #d8b4fe;
+}
+
+        .auto-expand {
+            font-family: 'Dancing Script', cursive; font-size: 1.25rem;
+            line-height: 1.6; padding: 1rem; width: 100%; min-height: 100px;
+            background-color: #fdfcf0; border: 1px solid #e5e7eb; border-radius: 8px;
+            resize: none; overflow: hidden; display: block;
+        }
+        
+        .todo-paper {
+            background: white; background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 24px 24px; min-height: 600px; border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Custom grid logic for the pill links */
+#links-grid > a:last-child:nth-child(odd) {
+    grid-column: span 2; /* If it's the 3rd, 5th, etc link, it spans both columns */
+}
+
+.link-pill {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 12px;
+    color: white;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.link-pill:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.delete-link {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.link-pill:hover .delete-link {
+    opacity: 1;
+}
+/* TO-DO LAYOUT & MINI-CALENDARS */
+    .daily-layout-grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+        min-height: 600px;
+    }
+
+    .task-input-large { font-size: 1.25rem; font-weight: 700; color: var(--color-primary-dark); }
+
+    .mini-calendar-sidebar { border-left: 1px dashed #e5e7eb; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .weekly-calendar-footer { display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; }
+    .weekly-calendar-footer .mini-cal { flex: 1; }
+
+    .mini-cal {
+        background: #fff; border-radius: 8px; padding: 0.75rem; width: 100%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #f3f4f6;
+    }
+
+    .mini-cal-header {
+        font-weight: 900; font-size: 0.7rem; text-transform: uppercase;
+        color: var(--color-primary-dark); text-align: center; margin-bottom: 0.5rem;
+        border-bottom: 2px solid var(--color-secondary-gold);
+    }
+
+    .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.6rem; }
+    .mini-cal-day-label { font-weight: 800; color: #9ca3af; padding-bottom: 4px; }
+    .mini-cal-date { padding: 4px 0; border-radius: 4px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .mini-cal-date:hover { background: #f3f4f6; color: var(--color-primary-dark); }
+    .mini-cal-today { background-color: var(--color-secondary-gold); color: white; }
+    .mini-cal-viewing { outline: 2px solid var(--color-primary-dark); font-weight: 900; }
+
+.todo-mode-btn {
+    transition: all 0.2s;
+}
+
+/* Only the active one should be white with purple text */
+.todo-mode-btn.selected-active {
+    background-color: white !important;
+    color: var(--color-primary-dark) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* The non-selected one should always stay transparent with white text */
+.todo-mode-btn:not(.selected-active) {
+    background-color: transparent !important;
+    color: white !important;
+}
+
+/* Weekly View Column Fixes */
+/* START EDITING HERE */
+.task-row {
+    display: flex;
+    align-items: center; /* Vertically centers checkbox, text, and trash icon */
+    gap: 0.75rem;
+    padding: 0.5rem 0.5rem;
+    border-bottom: 1px dashed #e5e7eb;
+    width: 100%;
+    transition: all 0.2s;
+    border-radius: 6px;
+}
+
+.task-row:hover {
+    background-color: rgba(178, 102, 255, 0.05);
+    outline: 1px solid rgba(178, 102, 255, 0.2);
+}
+
+/* START EDITING HERE */
+.task-row textarea {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    margin: 0;
+    padding: 4px 0;
+    display: block; 
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    height: auto; 
+}
+
+.task-row textarea {
+    width: 100%;
+    white-space: pre-wrap;       /* Allows wrapping */
+    word-wrap: break-word;      /* Breaks long words */
+    overflow-wrap: break-word;
+    display: block;
+}
+
+.day-pill-header {
+    background: #f3e8ff; 
+    border-radius: 8px; 
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    border: 1px solid #e9d5ff;
+    width: 100%; /* Spans the full width of the flex-1 container */
+    box-sizing: border-box; /* Critical: ensures border doesn't push width out */
+}
+
+/* Make Weekday Font Larger */
+.day-pill-header span:first-child {
+    font-size: 14px !important; /* Increased from 10px */
+    letter-spacing: 0.05em;
+}
+
+/* Make Add Task Thinner */
+.add-task-btn-thin {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: unset !important;
+    line-height: 1.5 !important;
+}
+
+/* Custom Checkbox Styling */
+.task-row input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #B266FF;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 2px; /* Pulls checkbox down slightly to match first line of text */
+    transition: all 0.2s;
+}
+
+.task-row input[type="checkbox"]:checked {
+    background-color: #B266FF;
+    border-color: #330066;
+}
+
+.task-row input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+/* END EDITING HERE */
+
+.task-input-small {
+    font-size: 0.75rem !important;
+    font-weight: 600;
+    line-height: 1.2;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    flex: 1;
+    min-width: 0;
+    height: auto; /* Ensure height can grow */
+}
+.task-actions {
+    display: flex;
+align-items: center; /* Centers trash icon with text */
+    flex-shrink: 0;
+    gap: 0.25rem;
+    /* Use margin-top to align with the first line of text */
+    margin-top: 4px; 
+}
+
+.task-actions i {
+    width: 0.8rem !important; 
+    height: 0.8rem !important;
+}
+
+/* Fixes the "white box" selected pill issue */
+.todo-mode-btn.bg-white {
+    background-color: white !important;
+    color: var(--color-primary-dark) !important;
+}
+
+#todo-render-container .text-gray-400.font-bold {
+    font-size: 8px !important;
+    white-space: nowrap; /* Keeps the month and day on one line */
+    letter-spacing: -0.02em;
+}
+
+.todo-column:nth-child(even) {
+    background-color: rgba(178, 102, 255, 0.03);
+}
+
+
+.clear-all-btn {
+    padding: 2px 6px !important;
+    border: 1px solid #fee2e2;
+    background: #fef2f2;
+    color: #ef4444;
+    font-size: 8px !important;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 800;
+    transition: all 0.2s;
+}
+
+.clear-all-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+/* --- THEMED MODAL SYSTEM --- */
+#themed-modal-container {
+    transition: all 0.3s ease-in-out;
+}
+
+.modal-animate-in {
+    animation: modalScaleUp 0.2s ease-out forwards;
+}
+
+@keyframes modalScaleUp {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header-bg {
+    background: linear-gradient(135deg, #330066 0%, #4c0099 100%);
+    border-bottom: 3px solid #B266FF;
+}
+
+.edit-link {
+    position: absolute;
+    right: 32px; /* Positioned to the left of the delete button */
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.link-pill:hover .edit-link {
+    opacity: 1;
+}
+
+</style>
+</head>
+<body class="p-2">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="header-bg text-white py-4 px-6 rounded-t-xl shadow-lg">
+            <div class="flex items-center justify-between">
+                <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
+                    <i data-lucide="graduation-cap" class="w-16 h-16 text-white"></i>
+                </div>
+                <div class="text-center flex-grow">
+                    <h1 class="text-4xl italic font-extrabold header-font tracking-widest" style="text-shadow: 2px 2px 0 #000000;">2026 BAR EXAM REVIEW TRACKER</h1>
+                    <h2 class="text-2xl font-extrabold tracking-wider italic text-[#B266FF]">#AweSAMBar2026</h2>
+                </div>
+                <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
+                    <i data-lucide="shield" class="w-16 h-16 text-white"></i>
+                </div>
+            </div>
+        </header>
+
+        <nav class="flex bg-white rounded-b-xl shadow-md border-x border-b border-gray-200 p-0.5 gap-1 mb-6">
+            <button onclick="switchTab('tab-notes')" class="tab-btn active flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-notes">
+                <i data-lucide="notebook" class="w-4 h-4"></i> <span>Review Notes</span>
+            </button>
+            <button onclick="switchTab('tab-todo')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-todo">
+                <i data-lucide="list-checks" class="w-4 h-4"></i> <span>To-Do List</span>
+            </button>
+<button onclick="switchTab('tab-links')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-links">
+    <i data-lucide="external-link" class="w-4 h-4"></i> <span>Links</span>
+</button>
+        </nav>
+
+        <div id="tab-notes" class="tab-content active">
+            <div class="bg-white p-4 rounded-xl shadow border border-gray-200">
+
+<div class="mb-6 px-4">
+    <div class="flex justify-between items-end mb-2">
+        <span class="header-font text-xs tracking-widest text-[#330066]">OVERALL NOTES PROGRESS</span>
+        <span id="master-percent-text" class="font-black text-sm text-[#B266FF]">0%</span>
+    </div>
+    <div id="master-progress-wrapper">
+        <div id="master-progress-fill"></div>
+    </div>
+</div>
+
+<div class="w-full mb-6 border-b pb-4" id="subject-tabs">
+    <button onclick="switchSubject('poli')" class="sub-tab-btn active" id="sub-btn-poli" data-sub="poli">Political</button>
+    <button onclick="switchSubject('lab')" class="sub-tab-btn" id="sub-btn-lab" data-sub="lab">Labor</button>
+    <button onclick="switchSubject('civ')" class="sub-tab-btn" id="sub-btn-civ" data-sub="civ">Civil</button>
+    <button onclick="switchSubject('tax')" class="sub-tab-btn" id="sub-btn-tax" data-sub="tax">Tax/Comm</button>
+    <button onclick="switchSubject('crim')" class="sub-tab-btn" id="sub-btn-crim" data-sub="crim">Criminal</button>
+    <button onclick="switchSubject('rem')" class="sub-tab-btn" id="sub-btn-rem" data-sub="rem">Remedial</button>
+</div>
+
+                <div id="subject-notes-container" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <div id="tab-todo" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col min-h-[700px]">
+                <div class="header-bg p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <button onclick="navigateTodo(-1)" class="p-2 hover:bg-white/10 rounded-full text-white">
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <div class="text-white text-center md:text-left min-w-[180px]">
+                            <h2 id="todo-view-title" class="header-font text-2xl tracking-widest">DAILY AGENDA</h2>
+                            <p id="todo-date-display" class="text-[10px] font-bold uppercase opacity-80"></p>
+                        </div>
+                        <button onclick="navigateTodo(1)" class="p-2 hover:bg-white/10 rounded-full text-white">
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                        <button onclick="jumpToToday()" class="ml-2 px-3 py-1 bg-[#B266FF] text-white text-[9px] font-black uppercase rounded-full hover:bg-white hover:text-[#330066] transition-all">
+                            Today
+                        </button>
+                    </div>
+                    
+                    <div class="flex bg-white/10 p-1 rounded-lg gap-1">
+                        <button onclick="switchTodoMode('daily')" id="todo-btn-daily" class="todo-mode-btn px-4 py-1 text-[10px] font-black uppercase rounded bg-white text-[#330066]">Daily</button>
+                        <button onclick="switchTodoMode('weekly')" id="todo-btn-weekly" class="todo-mode-btn px-4 py-1 text-[10px] font-black uppercase rounded text-white">Weekly</button>
+                    </div>
+                </div>
+
+                <div id="todo-render-container" class="p-6 flex-grow todo-paper overflow-x-auto"></div>
+            </div>
+        </div>
+
+
+
+<div id="tab-links" class="tab-content">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 min-h-[700px]">
+        <div class="header-bg p-4 rounded-lg mb-6 flex justify-between items-center">
+            <h2 class="header-font text-2xl text-white tracking-widest uppercase">Resource Dashboard</h2>
+            <button onclick="toggleLinkModal(true)" class="bg-[#B266FF] text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase hover:scale-105 transition-all">
+                + Add New Link
+            </button>
+        </div>
+
+        <div id="links-grid" class="grid grid-cols-2 gap-3">
+            </div>
+    </div>
+</div>
+
+<div id="link-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[100] p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="header-bg p-4 text-white font-black header-font text-xl">ADD RESOURCE LINK</div>
+        <div class="p-6 space-y-4">
+            <input type="text" id="link-title" placeholder="Link Title (e.g. Civ Law Drive)" class="w-full p-2 border-2 border-gray-100 rounded-lg outline-none focus:border-[#B266FF]">
+            <input type="text" id="link-url" placeholder="URL (https://...)" class="w-full p-2 border-2 border-gray-100 rounded-lg outline-none focus:border-[#B266FF]">
+            
+            <label class="block text-[10px] font-black uppercase text-gray-400">Select Icon</label>
+            <div id="icon-picker" class="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-2 border rounded-lg">
+                </div>
+
+            <label class="block text-[10px] font-black uppercase text-gray-400">Select Color</label>
+            <div id="color-picker" class="flex gap-2">
+                </div>
+        </div>
+        <div class="p-4 bg-gray-50 flex gap-2">
+            <button onclick="toggleLinkModal(false)" class="flex-1 py-2 text-gray-500 font-bold uppercase text-xs">Cancel</button>
+            <button onclick="saveLink()" class="flex-1 py-2 bg-[#330066] text-white font-bold uppercase text-xs rounded-lg">Save Link</button>
+        </div>
+    </div>
+</div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- REVIEW NOTES LOGIC ---
+const SUBJECTS = {
+    poli: [
+        "I. BASIC CONCEPTS",
+        "II. NATIONAL TERRITORY",
+        "III. CITIZENSHIP",
+        "IV. LEGISLATIVE DEPARTMENT",
+        "V. EXECUTIVE DEPARTMENT",
+        "VI. JUDICIAL DEPARTMENT",
+        "VII. CONSTITUTIONAL COMMISSIONS",
+        "VIII. CONSTITUTIONAL RIGHTS",
+        "IX. NATIONAL ECONOMY AND PATRIMONY",
+        "X. ADMINISTRATIVE LAW",
+        "XI. LAW ON PUBLIC OFFICERS",
+        "XII. ELECTION LAW",
+        "XIII. LOCAL GOVERNMENTS",
+        "XIV. PUBLIC INTERNATIONAL LAW"
+    ],
+    lab: [
+        "I. BASIC PRINCIPLES AND CONCEPTS",
+        "II. RECRUITMENT AND PLACEMENT",
+        "III. EMPLOYMENT RELATIONSHIP",
+        "IV. LABOR STANDARDS",
+        "V. LABOR RELATIONS",
+        "VI. SUSPENSION AND TERMINATION OF EMPLOYMENT",
+        "VII. SOCIAL LEGISLATION",
+        "VIII. LABOR ADJUDICATION-JURISDICTION & REMEDIES"
+    ],
+    civ: [
+        "I. EFFECT AND APPLICATION OF LAWS",
+        "II. PERSONS",
+        "III. FAMILY CODE",
+        "IV. CIVIL REGISTER",
+        "V. PROPERTY, OWNERSHIP, AND ITS MODIFICATIONS",
+        "VI. LAND TITLES AND DEEDS",
+        "VII. SUCCESSION",
+        "VIII. OBLIGATIONS AND CONTRACTS",
+        "IX. SPECIAL CONTRACTS",
+        "X. QUASI-CONTRACTS",
+        "XI. TORTS AND QUASI-DELICTS",
+        "XII. DAMAGES"
+    ],
+    tax: [ // Based on Commercial and Taxation Laws
+        "I. BUSINESS ORGANIZATIONS",
+        "II. INSURANCE",
+        "III. TRANSPORTATION",
+        "IV. BANKING",
+        "V. INTELLECTUAL PROPERTY",
+        "VI. SPECIAL COMMERCIAL LAWS",
+        "VII. TAXATION LAW"
+    ],
+    crim: [
+        "I. FUNDAMENTAL PRINCIPLES",
+        "II. FELONIES AND CRIMINAL LIABILITY",
+        "III. CRIMES AND THEIR PENALTIES"
+    ],
+    rem: [
+        "I. GENERAL PRINCIPLES",
+        "II. JURISDICTION",
+        "III. CIVIL PROCEDURE",
+        "IV. PROVISIONAL REMEDIES",
+        "V. SPECIAL CIVIL ACTIONS",
+        "VI. SPECIAL PROCEEDINGS AND WRITS",
+        "VII. CRIMINAL PROCEDURE",
+        "VIII. EVIDENCE",
+        "IX. LEGAL AND JUDICIAL ETHICS",
+        "X. PRACTICAL EXERCISES"
+    ]
+};
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
+            if(tabId === 'tab-todo') renderTodoView();
+        }
+
+/* START EDITING HERE */
+function switchSubject(sub) {
+    const container = document.getElementById('subject-notes-container');
+    const syllabus = SUBJECTS[sub];
+    
+    if (!container || !syllabus) return;
+
+    // Update Tab UI active states
+    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.getElementById('sub-btn-' + sub);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    // Group flat syllabus array into Depth 1 (folders) and Depth 2 (note slots)
+    const structuredSyllabus = [];
+    let currentParent = null;
+
+    syllabus.forEach(item => {
+        if (item.depth === 1) {
+            currentParent = { title: item.topic, subtopics: [] };
+            structuredSyllabus.push(currentParent);
+        } else if (item.depth === 2 && currentParent) {
+            currentParent.subtopics.push(item.topic);
+        }
+    });
+
+    // Build the nested UI
+    container.innerHTML = structuredSyllabus.map((mainTopic) => `
+        <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm">
+            <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
+                     style="border-color: ${getActiveThemeColor(sub)}">
+                <div class="flex flex-col">
+                    <span class="uppercase tracking-wider">${mainTopic.title}</span>
+                    <span class="text-[9px] text-gray-400 font-bold">${mainTopic.subtopics.length} SUBTOPICS</span>
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+            </summary>
+            <div class="p-2 bg-gray-50 space-y-2">
+                ${mainTopic.subtopics.map(subTopic => `
+                    <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner">
+                        <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest">
+                            ${subTopic}
+                        </label>
+                        <textarea 
+                            class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden" 
+                            placeholder="Type notes for ${subTopic}..."
+                            oninput="autoExpand(this); saveNote('${sub}', '${mainTopic.title}', '${subTopic}', this.value); updateProgress()"
+                        >${localStorage.getItem(`note_${sub}_${mainTopic.title}_${subTopic}`) || ''}</textarea>
+                    </div>
+                `).join('')}
+            </div>
+        </details>
+    `).join('');
+
+    lucide.createIcons();
+    updateProgress();
+    setTimeout(() => { document.querySelectorAll('.auto-expand').forEach(autoExpand); }, 50);
+}
+
+function updateProgress() {
+    let totalSubtopics = 0;
+    let completedSubtopics = 0;
+
+    Object.keys(SUBJECTS).forEach(sub => {
+        const syllabus = SUBJECTS[sub];
+        let subCount = 0;
+        let subDone = 0;
+
+        syllabus.forEach((item, index) => {
+            // We only track progress for Depth 2 items (actual note slots)
+            if (item.depth === 2) {
+                totalSubtopics++;
+                subCount++;
+                
+                // Find parent topic for the unique storage key
+                const parent = syllabus.slice(0, index).reverse().find(i => i.depth === 1);
+                const parentTitle = parent ? parent.topic : '';
+                
+                const saved = localStorage.getItem(`note_${sub}_${parentTitle}_${item.topic}`);
+                if (saved && saved.trim().length > 0) {
+                    completedSubtopics++;
+                    subDone++;
+                }
+            }
+        });
+
+        // Update individual Tab Percentage
+        const percent = Math.round((subDone / subCount) * 100) || 0;
+        const btn = document.getElementById('sub-btn-' + sub);
+        if (btn) {
+            const subName = btn.getAttribute('data-name') || btn.innerText.split('(')[0].trim();
+            btn.setAttribute('data-name', subName);
+            btn.innerHTML = `${subName} <span class="ml-1 text-[9px] opacity-70">(${percent}%)</span>`;
+        }
+    });
+
+    // Update Master Progress Bar
+    const totalPercent = Math.round((completedSubtopics / totalSubtopics) * 100) || 0;
+    const fill = document.getElementById('master-progress-fill');
+    const text = document.getElementById('master-percent-text');
+    if (fill) fill.style.width = totalPercent + '%';
+    if (text) text.innerText = totalPercent + '%';
+}
+
+function getActiveThemeColor(sub) {
+    const colors = { poli: '#795548', civ: '#1e3a8a', rem: '#674ea7', lab: '#38761d', tax: '#eab308', crim: '#b33a3a' };
+    return colors[sub] || '#330066';
+}
+
+function saveNote(sub, mainTopic, subTopic, val) {
+    localStorage.setItem(`note_${sub}_${mainTopic}_${subTopic}`, val);
+}
+
+        function autoExpand(textarea) {
+            textarea.style.height = 'inherit';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+
+        // --- TO-DO LOGIC ---
+        let todoMode = 'daily';
+        let todoOffset = 0; 
+
+        // Storage structure: { "date_string": [{text: "...", done: false}] }
+        let todoStorage = JSON.parse(localStorage.getItem('bar_todos_v2')) || {};
+
+/* START EDITING HERE: switchTodoMode logic fix */
+function switchTodoMode(mode) {
+    todoMode = mode;
+    document.querySelectorAll('.todo-mode-btn').forEach(b => {
+        b.classList.remove('selected-active', 'bg-white', 'text-[#330066]'); // Clear all possible active states
+        b.classList.add('text-white'); // Reset to default white text
+    });
+const activeBtn = document.getElementById(`todo-btn-${mode}`);
+    if(activeBtn) {
+        activeBtn.classList.add('selected-active');
+        activeBtn.classList.remove('text-white');
+    }
+    renderTodoView();
+}
+/* END EDITING HERE */
+
+        function navigateTodo(dir) {
+            todoOffset += dir;
+            renderTodoView();
+        }
+
+        function jumpToToday() {
+            todoOffset = 0;
+            renderTodoView();
+        }
+
+window.jumpToSpecificDate = function(dateString) {
+            const targetDate = new Date(dateString);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize today to start of day
+            
+            // Calculate new offset
+            const diffTime = targetDate.getTime() - today.getTime();
+            todoOffset = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            renderTodoView();
+        };
+
+function renderTodoView() {
+    const container = document.getElementById('todo-render-container');
+    const title = document.getElementById('todo-view-title');
+    const dateDisplay = document.getElementById('todo-date-display');
+    const baseDate = new Date();
+    const viewingDate = new Date(baseDate);
+    viewingDate.setDate(viewingDate.getDate() + todoOffset);
+
+const dateKey = viewingDate.toDateString();
+    const tasks = todoStorage[dateKey] || [];
+
+if (todoMode === 'daily') {
+        title.innerText = "DAILY AGENDA";
+        dateDisplay.innerText = viewingDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        
+        let calendarHtml = '<div class="mini-calendar-sidebar">';
+        for (let i = -1; i <= 1; i++) {
+            const calDate = new Date(viewingDate.getFullYear(), viewingDate.getMonth() + i, 1);
+            calendarHtml += generateMiniCal(calDate, viewingDate);
+        }
+        calendarHtml += '</div>';
+
+        container.innerHTML = `
+            <div class="daily-layout-grid">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <button onclick="addTodoItem('${dateKey}')" class="text-sm font-black text-[#B266FF] border-2 border-dashed border-[#B266FF]/30 px-6 py-2 rounded-xl uppercase flex items-center gap-2 hover:bg-[#B266FF] hover:text-white transition-all">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> ADD A TASK
+                        </button>
+                        ${tasks.length > 0 ? `<button onclick="clearDayTasks('${dateKey}')" class="clear-all-btn">Clear All</button>` : ''}
+                    </div>
+                    <div id="list-${dateKey}">${renderTaskList(dateKey, 'large')}</div>
+                </div>
+                ${calendarHtml}
+            </div>`;
+    } else {
+/* END EDITING HERE */
+        title.innerText = "WEEKLY GOALS";
+        const startOfWeek = new Date(baseDate);
+        startOfWeek.setDate(baseDate.getDate() - baseDate.getDay() + (todoOffset * 7));
+        const endOfWeek = new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
+        
+        // Full Month Date Range: December 28, 2025 - January 3, 2026
+        const options = { month: 'long', day: 'numeric', year: 'numeric' };
+        dateDisplay.innerText = `${startOfWeek.toLocaleDateString('en-US', options)} - ${endOfWeek.toLocaleDateString('en-US', options)}`;
+
+let gridHtml = `<div class="flex gap-4 min-w-[1000px]">`;
+/* START EDITING HERE */
+// Update the loop in renderTodoView()
+for (let i = 0; i < 7; i++) {
+const dayDate = new Date(startOfWeek);
+            dayDate.setDate(startOfWeek.getDate() + i);
+            const dateKey = dayDate.toDateString();
+            const tasks = todoStorage[dateKey] || [];
+            const colMonthDay = dayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    
+gridHtml += `
+                <div class="todo-column flex-1 min-w-[140px] border-r border-dashed border-gray-200 last:border-0 px-2 flex flex-col items-center">
+                    <div class="day-pill-header">
+                        <span class="block font-black text-[#330066] leading-tight" style="font-size: 14px !important;">${dayDate.toLocaleDateString('en-US', {weekday:'short'}).toUpperCase()}</span>
+                        <span class="block text-[8px] text-[#B266FF] font-bold uppercase tracking-tighter">${colMonthDay}</span>
+                    </div>
+                    
+                    <div class="flex gap-1 w-full mb-2">
+                        <button onclick="addTodoItem('${dateKey}')" class="add-task-btn-thin flex-grow border border-dashed border-gray-300 rounded text-[9px] font-bold text-[#B266FF] uppercase hover:bg-gray-50 transition-all">
+                            + Add Task
+                        </button>
+                        ${tasks.length > 0 ? `<button onclick="clearDayTasks('${dateKey}')" class="clear-all-btn">Clear</button>` : ''}
+                    </div>
+
+                    <div id="list-${dateKey}" class="w-full space-y-1">${renderTaskList(dateKey, 'small')}</div>
+                </div>`;
+}
+        gridHtml += `</div>`;
+
+        let footerCals = '<div class="weekly-calendar-footer">';
+        for (let i = -1; i <= 1; i++) {
+            const calDate = new Date(viewingDate.getFullYear(), viewingDate.getMonth() + i, 1);
+            footerCals += generateMiniCal(calDate, viewingDate);
+        }
+        footerCals += '</div>';
+
+        container.innerHTML = gridHtml + footerCals;
+    }
+
+    // Refresh icons and force textareas to wrap correctly
+    lucide.createIcons();
+    document.querySelectorAll('.task-row textarea').forEach(el => {
+        autoExpand(el);
+    });
+}
+
+function clearDayTasks(dateKey) {
+    // Replaced browser confirm with the themed modal
+    showThemedConfirm(
+        "Clear Agenda", 
+        "Are you sure you want to delete all tasks for this day? This action cannot be undone.", 
+        () => {
+            todoStorage[dateKey] = [];
+            saveAndRefresh();
+        }
+    );
+}
+
+function generateMiniCal(monthDate, selectedDate) {
+    const monthName = monthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).getDay();
+    const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+    const today = new Date();
+
+    let html = `
+        <div class="mini-cal">
+            <div class="mini-cal-header">${monthName}</div>
+            <div class="mini-cal-grid">
+                <div class="mini-cal-day-label">S</div><div class="mini-cal-day-label">M</div>
+                <div class="mini-cal-day-label">T</div><div class="mini-cal-day-label">W</div>
+                <div class="mini-cal-day-label">T</div><div class="mini-cal-day-label">F</div>
+                <div class="mini-cal-day-label">S</div>`;
+
+    for (let i = 0; i < firstDay; i++) html += '<div></div>';
+
+    // UPDATED DATE GENERATION:
+    for (let day = 1; day <= daysInMonth; day++) {
+        const checkDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
+        const dateKey = checkDate.toDateString();
+        let classes = "mini-cal-date";
+        
+        if (dateKey === new Date().toDateString()) classes += " mini-cal-today";
+        if (dateKey === selectedDate.toDateString()) classes += " mini-cal-viewing";
+        
+        // Added onclick to jump to date
+        html += `<div class="${classes}" onclick="jumpToSpecificDate('${dateKey}')">${day}</div>`;
+    }
+    html += `</div></div>`;
+    return html;
+}
+
+/* START EDITING HERE */
+function renderTaskList(dateKey, sizeClass) {
+    const tasks = todoStorage[dateKey] || [];
+    const inputClass = sizeClass === 'large' ? 'task-input-large' : 'task-input-small';
+    const iconSize = sizeClass === 'large' ? 'w-5 h-5' : 'w-3.5 h-3.5';
+
+    return tasks.map((task, i) => `
+        <div class="task-row group">
+            <input type="checkbox" onchange="toggleTodo('${dateKey}', ${i})" ${task.done ? 'checked' : ''} 
+                   class="w-5 h-5 rounded border-gray-300 text-[#330066] flex-shrink-0">
+            
+            <textarea rows="1" 
+                      oninput="autoExpand(this); editTodo('${dateKey}', ${i}, this.value)" 
+                      class="bg-transparent border-none outline-none flex-grow ${inputClass} ${task.done ? 'line-through text-gray-300' : 'text-gray-700'} resize-none overflow-hidden"
+                      placeholder="Enter task..."
+            >${task.text}</textarea>
+            
+            <div class="task-actions">
+                <button onclick="removeTodo('${dateKey}', ${i})" class="text-red-400 hover:text-red-600 transition-colors">
+                    <i data-lucide="trash-2" class="${iconSize}"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+/* END EDITING HERE *//* END EDITING HERE */
+
+        function addTodoItem(dateKey) {
+            if (!todoStorage[dateKey]) todoStorage[dateKey] = [];
+            todoStorage[dateKey].push({ text: 'New Task', done: false });
+            saveAndRefresh();
+        }
+
+        function toggleTodo(dateKey, i) { 
+            todoStorage[dateKey][i].done = !todoStorage[dateKey][i].done; 
+            saveAndRefresh(); 
+        }
+
+function editTodo(dateKey, i, val) { 
+            todoStorage[dateKey][i].text = val; 
+            // Save to storage but DO NOT call renderTodoView() here
+            localStorage.setItem('bar_todos_v2', JSON.stringify(todoStorage));
+        }
+
+        function removeTodo(dateKey, i) { 
+            todoStorage[dateKey].splice(i, 1); 
+            saveAndRefresh(); 
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('bar_todos_v2', JSON.stringify(todoStorage));
+            renderTodoView();
+        }
+
+// Data and Constants
+const studyIcons = [
+    'book', 'book-open', 'graduation-cap', 'pencil', 'library', 'file-text', 
+    'folder', 'link', 'archive', 'clipboard-list', 'globe', 'database', 
+    'brain', 'scroll', 'bookmark', 'search', 'scale', 'gavel', 'cpu', 'cloud'
+];
+
+const studyColors = [
+    '#00BCD4', '#0097A7', '#4CAF50', '#8BC34A', '#B266FF', '#673AB7', 
+    '#FF9800', '#F44336', '#E91E63', '#330066'
+];
+
+let selectedIcon = 'link';
+let selectedColor = '#00BCD4';
+let userLinks = JSON.parse(localStorage.getItem('bar_user_links')) || [];
+
+function toggleLinkModal(show) {
+    const modal = document.getElementById('link-modal');
+    modal.classList.toggle('hidden', !show);
+    modal.classList.toggle('flex', show);
+    if(show) setupPickers();
+}
+
+function setupPickers() {
+    const iconContainer = document.getElementById('icon-picker');
+    const colorContainer = document.getElementById('color-picker');
+    
+    iconContainer.innerHTML = studyIcons.map(icon => `
+        <button onclick="selectedIcon='${icon}'; setupPickers()" 
+            class="p-2 border rounded hover:bg-gray-100 flex justify-center ${selectedIcon === icon ? 'border-[#B266FF] bg-purple-50' : 'border-gray-100'}">
+            <i data-lucide="${icon}" class="w-5 h-5 ${selectedIcon === icon ? 'text-[#330066]' : 'text-gray-600'}"></i>
+        </button>
+    `).join('');
+
+    colorContainer.innerHTML = studyColors.map(color => `
+        <button onclick="selectedColor='${color}'; setupPickers()" 
+            class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${selectedColor === color ? 'border-[#330066] ring-2 ring-[#B266FF]' : 'border-white ring-1 ring-gray-200'}" 
+            style="background:${color}"></button>
+    `).join('');
+    
+    lucide.createIcons();
+}
+
+function saveLink() {
+    const title = document.getElementById('link-title').value;
+    const url = document.getElementById('link-url').value;
+    
+    if(!title || !url) return alert("Title and URL required!");
+
+    userLinks.push({ title, url, icon: selectedIcon, color: selectedColor });
+    localStorage.setItem('bar_user_links', JSON.stringify(userLinks));
+    
+    // Reset inputs
+    document.getElementById('link-title').value = '';
+    document.getElementById('link-url').value = '';
+    
+    toggleLinkModal(false);
+    renderLinks();
+}
+
+function deleteLink(index, e) {
+    e.preventDefault();
+    e.stopPropagation(); // Prevents the link from opening
+    
+    const linkTitle = userLinks[index].title;
+    
+    showThemedConfirm(
+        "Delete Resource", 
+        `Are you sure you want to remove "${linkTitle}"? This cannot be undone.`, 
+        () => {
+            userLinks.splice(index, 1);
+            localStorage.setItem('bar_user_links', JSON.stringify(userLinks));
+            renderLinks();
+        }
+    );
+}
+
+/* START EDITING HERE */
+function renderLinks() {
+    const container = document.getElementById('links-grid');
+    container.innerHTML = userLinks.map((link, i) => `
+        <a href="${link.url}" target="_blank" class="link-pill" style="background: ${link.color}">
+            <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mr-3">
+                <i data-lucide="${link.icon}" class="w-5 h-5 text-white"></i>
+            </div>
+            <span>${link.title}</span>
+            <div class="flex gap-1">
+                <button onclick="editLink(${i}, event)" class="edit-link p-1 bg-black/10 rounded hover:bg-white/20 transition-colors">
+                    <i data-lucide="pencil" class="w-3 h-3 text-white"></i>
+                </button>
+                <button onclick="deleteLink(${i}, event)" class="delete-link p-1 bg-black/10 rounded hover:bg-red-500 transition-colors">
+                    <i data-lucide="trash-2" class="w-3 h-3 text-white"></i>
+                </button>
+            </div>
+        </a>
+    `).join('');
+    lucide.createIcons();
+}
+/* END EDITING HERE */
+
+        // --- INITIALIZE ---
+        window.onload = () => {
+            switchSubject('poli');
+            renderTodoView();
+renderLinks();
+        };
+
+/* --- THEMED MODAL SYSTEM --- */
+function showThemedConfirm(title, message, onConfirm) {
+    const container = document.getElementById('themed-modal-container');
+    const content = document.getElementById('themed-modal-content');
+
+    content.innerHTML = `
+        <div class="modal-header-bg p-4 text-white font-black header-font text-xl tracking-widest uppercase">
+            ${title}
+        </div>
+        <div class="p-6">
+            <p class="text-gray-600 font-bold text-sm leading-relaxed">${message}</p>
+        </div>
+        <div class="p-4 bg-gray-50 flex gap-3">
+            <button onclick="closeThemedModal()" class="flex-1 py-3 text-gray-400 font-black uppercase text-[10px] tracking-widest hover:text-gray-600 transition-colors">
+                Cancel
+            </button>
+            <button id="themed-modal-confirm-btn" class="flex-1 py-3 bg-[#330066] text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg shadow-purple-200 hover:bg-[#B266FF] transition-all">
+                Confirm
+            </button>
+        </div>
+    `;
+
+    container.classList.remove('hidden');
+    container.classList.add('flex');
+
+    document.getElementById('themed-modal-confirm-btn').onclick = () => {
+        onConfirm();
+        closeThemedModal();
+    };
+}
+
+function closeThemedModal() {
+    const container = document.getElementById('themed-modal-container');
+    container.classList.add('hidden');
+    container.classList.remove('flex');
+}
+
+/* START EDITING HERE */
+let editingLinkIndex = null; // Tracks if we are editing or adding new
+
+function editLink(index, e) {
+    e.preventDefault(); // Stop the link from opening
+    editingLinkIndex = index;
+    const link = userLinks[index];
+
+    // Fill modal with existing data
+    document.getElementById('link-title').value = link.title;
+    document.getElementById('link-url').value = link.url;
+    selectedIcon = link.icon;
+    selectedColor = link.color;
+
+    toggleLinkModal(true);
+}
+
+// Modify your saveLink function to handle updates
+function saveLink() {
+    const title = document.getElementById('link-title').value;
+    const url = document.getElementById('link-url').value;
+    
+    if(!title || !url) return alert("Title and URL required!");
+
+    const linkData = { title, url, icon: selectedIcon, color: selectedColor };
+
+    if (editingLinkIndex !== null) {
+        // Update existing
+        userLinks[editingLinkIndex] = linkData;
+        editingLinkIndex = null; // Reset
+    } else {
+        // Add new
+        userLinks.push(linkData);
+    }
+
+    localStorage.setItem('bar_user_links', JSON.stringify(userLinks));
+    
+    // Reset inputs
+    document.getElementById('link-title').value = '';
+    document.getElementById('link-url').value = '';
+    
+    toggleLinkModal(false);
+    renderLinks();
+}
+
+// Also, reset editingLinkIndex when simply opening the modal to add a new link
+function toggleLinkModal(show) {
+    const modal = document.getElementById('link-modal');
+    modal.classList.toggle('hidden', !show);
+    modal.classList.toggle('flex', show);
+    if(show) {
+        setupPickers();
+    } else {
+        editingLinkIndex = null; // Reset if closed
+    }
+}
+/* END EDITING HERE */
+
+    </script>
+
+<div id="themed-modal-container" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[200] p-4">
+    <div id="themed-modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden modal-animate-in border border-purple-100">
+        </div>
+</div>
+</body>
+</html>
