@@ -393,20 +393,22 @@ align-items: center; /* Centers trash icon with text */
 
 </style>
 </head>
-<body class="p-2">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="header-bg text-white py-4 px-6 rounded-t-xl shadow-lg">
+<body class="bg-gray-100 min-h-screen p-1 sm:p-2">
+    
+<div id="auth-overlay" class="fixed inset-0 z-[9999] bg-gray-100 hidden flex-col items-center transition-opacity duration-500"></div>
+
+        <header class="header-bg text-white py-1 px-4 sm:py-2 sm:px-6 rounded-xl shadow-2xl mt-1">
             <div class="flex items-center justify-between">
-                <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                    <i data-lucide="graduation-cap" class="w-16 h-16 text-white"></i>
+                <div class="flex-shrink-0 w-24 h-24 flex items-center justify-center rounded-full overflow-hidden">
+                    <img src="https://raw.githubusercontent.com/ariiannemay/2026-Bar-Exam-Tracker/main/Images/LAWLOGO.png" alt="Law Logo" class="w-24 h-24 object-cover">
                 </div>
-                <div class="text-center flex-grow">
-                    <h1 class="text-4xl italic font-extrabold header-font tracking-widest" style="text-shadow: 2px 2px 0 #000000;">2026 BAR EXAM REVIEW TRACKER</h1>
-                    <h2 class="text-2xl font-extrabold tracking-wider italic text-[#B266FF]">#AweSAMBar2026</h2>
+                <div class="text-center mx-4 flex-grow">
+                    <h1 class="text-3xl sm:text-4xl italic font-extrabold header-font tracking-widest mb-1" style="text-shadow: 2px 2px 0 #000000;">2026 BAR EXAM REVIEW TRACKER</h1>
+                    <h2 class="text-xl sm:text-xl font-extrabold tracking-wider mb-0 italic" style="line-height: 1.1;">#AweSAMBar2026</h2>
                 </div>
-                <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                    <i data-lucide="shield" class="w-16 h-16 text-white"></i>
+                <div class="flex-shrink-0 w-24 h-24 flex items-center justify-center rounded-full overflow-hidden">
+                    <img src="https://raw.githubusercontent.com/ariiannemay/2026-Bar-Exam-Tracker/main/Images/CHECKLIST.png" alt="Checklist Logo" class="w-24 h-24 object-cover">
                 </div>
             </div>
         </header>
@@ -520,7 +522,6 @@ align-items: center; /* Centers trash icon with text */
         lucide.createIcons();
 
         // --- REVIEW NOTES LOGIC ---
-/* START EDITING HERE */
 const SUBJECTS = {
     poli: typeof POLI_SYLLABUS !== 'undefined' ? POLI_SYLLABUS : [],
     lab: typeof LAB_SYLLABUS !== 'undefined' ? LAB_SYLLABUS : [],
@@ -529,7 +530,6 @@ const SUBJECTS = {
     crim: typeof CRIM_SYLLABUS !== 'undefined' ? CRIM_SYLLABUS : [],
     rem: typeof REM_ETHICS_SYLLABUS !== 'undefined' ? REM_ETHICS_SYLLABUS : []
 };
-/* END EDITING HERE */
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -540,21 +540,18 @@ const SUBJECTS = {
         }
 
 /* START EDITING HERE */
+/* START EDITING HERE */
 function switchSubject(sub) {
     const container = document.getElementById('subject-notes-container');
     const syllabus = SUBJECTS[sub];
     
-    if (!container || !syllabus || syllabus.length === 0) {
-        container.innerHTML = `<p class="p-4 text-center text-gray-400">No syllabus data found for ${sub}. Check if your .js files are linked correctly.</p>`;
-        return;
-    }
+    if (!container || !syllabus || syllabus.length === 0) return;
 
-    // Update Tab UI
     document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById('sub-btn-' + sub);
     if (activeBtn) activeBtn.classList.add('active');
     
-    // Group flat list into Depth 1 (folders) and Depth 2 (note slots)
+    // Group logic items into Depth 1 (Folders) and Depth 2 (Notes)
     const structuredSyllabus = [];
     let currentParent = null;
 
@@ -567,12 +564,11 @@ function switchSubject(sub) {
         }
     });
 
-    // Render the nested UI
     container.innerHTML = structuredSyllabus.map((mainTopic) => `
         <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm">
             <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
                      style="border-color: ${getActiveThemeColor(sub)}">
-                <div class="flex flex-col">
+                <div class="flex flex-col text-left">
                     <span class="uppercase tracking-wider">${mainTopic.title}</span>
                     <span class="text-[9px] text-gray-400 font-bold">${mainTopic.subtopics.length} SUBTOPICS</span>
                 </div>
@@ -581,7 +577,7 @@ function switchSubject(sub) {
             <div class="p-2 bg-gray-50 space-y-2">
                 ${mainTopic.subtopics.map(subTopic => `
                     <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner">
-                        <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest">
+                        <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest text-left">
                             ${subTopic}
                         </label>
                         <textarea 
@@ -598,8 +594,9 @@ function switchSubject(sub) {
     lucide.createIcons();
     updateProgress();
     setTimeout(() => { document.querySelectorAll('.auto-expand').forEach(autoExpand); }, 50);
-}            
+}
 
+/* START EDITING HERE */
 function updateProgress() {
     let totalSubtopics = 0;
     let completedSubtopics = 0;
@@ -609,16 +606,17 @@ function updateProgress() {
         let subCount = 0;
         let subDone = 0;
 
+        // Process only Depth 2 items as the actual "tasks"
         syllabus.forEach((item, index) => {
-            // We only track progress for Depth 2 items (actual note slots)
             if (item.depth === 2) {
                 totalSubtopics++;
                 subCount++;
                 
-                // Find parent topic for the unique storage key
+                // Find nearest preceding Depth 1 parent to match the save key format
                 const parent = syllabus.slice(0, index).reverse().find(i => i.depth === 1);
                 const parentTitle = parent ? parent.topic : '';
                 
+                // Match the key format used in saveNote
                 const saved = localStorage.getItem(`note_${sub}_${parentTitle}_${item.topic}`);
                 if (saved && saved.trim().length > 0) {
                     completedSubtopics++;
@@ -627,7 +625,7 @@ function updateProgress() {
             }
         });
 
-        // Update individual Tab Percentage
+        // Update Button percentage text
         const percent = Math.round((subDone / subCount) * 100) || 0;
         const btn = document.getElementById('sub-btn-' + sub);
         if (btn) {
@@ -637,10 +635,11 @@ function updateProgress() {
         }
     });
 
-    // Update Master Progress Bar
+    // Update Master Progress Bar UI
     const totalPercent = Math.round((completedSubtopics / totalSubtopics) * 100) || 0;
     const fill = document.getElementById('master-progress-fill');
     const text = document.getElementById('master-percent-text');
+    
     if (fill) fill.style.width = totalPercent + '%';
     if (text) text.innerText = totalPercent + '%';
 }
