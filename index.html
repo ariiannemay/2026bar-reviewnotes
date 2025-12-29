@@ -1248,6 +1248,7 @@ function toggleLinkModal(show) {
 }
 
 /* START EDITING HERE */
+/* START EDITING HERE */
 function exportSubjectNotes(sub) {
     const syllabus = SUBJECTS[sub];
     const btn = document.getElementById('sub-btn-' + sub);
@@ -1256,10 +1257,40 @@ function exportSubjectNotes(sub) {
     
     const printWindow = window.open('', '_blank');
     
+    // Helper function to escape HTML special characters
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     let printTemplate = `
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
-        <div style="font-family: 'Inter', sans-serif; padding: 40px; color: #1a1a1a;">
-            
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>${subjectName} Notes</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+            <style>
+                @page {
+                    margin: 1in; /* Adjust as needed (e.g., 0.75in for smaller margins) */
+                    size: letter portrait; /* Or A4 if preferred */
+                }
+                body {
+                    margin: 0;
+                    padding: 0.5in; /* Inner padding for content */
+                    font-family: 'Inter', sans-serif;
+                    color: #1a1a1a;
+                }
+                /* Add page breaks for sections if content is very long */
+                .section-break { page-break-before: always; }
+                /* Your existing styles can go here if needed */
+            </style>
+        </head>
+        <body>
             <div style="border-bottom: 5px solid ${themeColor}; margin-bottom: 30px; padding-bottom: 10px;">
                 <div style="font-family: 'Bebas Neue', cursive; font-size: 48px; color: ${themeColor}; letter-spacing: 2px; line-height: 1;">
                     #AweSAMBar2026 • ${subjectName}
@@ -1276,7 +1307,6 @@ function exportSubjectNotes(sub) {
         let depthStyle = `margin-left: ${indent}px; margin-top: 15px; font-family: 'Inter', sans-serif;`;
         
         if (item.depth === 1) {
-            // RESTORING THE "CUTE" LEFT BORDER
             depthStyle = `font-family: 'Inter', sans-serif; font-size: 20px; color: ${themeColor}; margin-top: 40px; margin-bottom: 10px; padding: 8px 15px; background-color: ${themeColor}08; border-left: 5px solid ${themeColor}; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;`;
         } else if (item.depth === 2) {
             depthStyle += `font-weight: 900; font-size: 15px; text-transform: uppercase; color: #374151; border-bottom: 1px solid #eee; padding-bottom: 3px;`;
@@ -1288,7 +1318,6 @@ function exportSubjectNotes(sub) {
         
         printTemplate += `<div style="${depthStyle}">${item.topic}</div>`;
         
-/* START EDITING HERE */
         if (isNote) {
             let path = [];
             let currentD = item.depth;
@@ -1299,9 +1328,11 @@ function exportSubjectNotes(sub) {
                 }
             }
             const key = `note_${sub}_${path.join('_')}_${item.topic}`;
-            const noteContent = localStorage.getItem(key) || "<i>No notes recorded.</i>";
+            let noteContent = localStorage.getItem(key) || "<i>No notes recorded.</i>";
             
-            // USE THIS VERSION TO STOP THE SQUISHING
+            // Escape the content to prevent HTML injection
+            noteContent = escapeHtml(noteContent);
+
             printTemplate += `
                 <div style="
                     display: block;
@@ -1337,7 +1368,8 @@ function exportSubjectNotes(sub) {
                     • Faith. Grit. Determination. •
                 </div>
             </div>
-        </div>`;
+        </body>
+        </html>`;
 
     printWindow.document.write(printTemplate);
     printWindow.document.close();
@@ -1346,7 +1378,7 @@ function exportSubjectNotes(sub) {
         printWindow.print();
     }, 800);
 }
-/* END EDITING HERE */
+
 
 </script>
 
