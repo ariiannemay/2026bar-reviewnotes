@@ -1301,23 +1301,28 @@ function exportSubjectNotes(sub) {
             const key = `note_${sub}_${path.join('_')}_${item.topic}`;
             const noteContent = localStorage.getItem(key) || "<i>No notes recorded.</i>";
             
-            // Fix: Use 'display: block' and a cleaner margin-left to prevent text squishing
+            // USE THIS VERSION TO STOP THE SQUISHING
             printTemplate += `
                 <div style="
                     display: block;
-                    white-space: pre-wrap; 
-                    font-size: 13px; 
-                    line-height: 1.6; 
-                    color: #1f2937; 
+                    width: auto;
+                    margin-left: ${indent + 20}px; 
                     margin-top: 5px;
                     margin-bottom: 25px;
-                    margin-left: ${indent + 25}px; 
                     padding-left: 15px; 
                     border-left: 2px solid #e5e7eb; 
                     font-family: 'Inter', sans-serif;
-                    max-width: 85%;
                 ">
-                    ${noteContent}
+                    <div style="
+                        white-space: pre-wrap; 
+                        font-size: 13px; 
+                        line-height: 1.6; 
+                        color: #1f2937; 
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                    ">
+                        ${noteContent}
+                    </div>
                 </div>`;
         }
     });
