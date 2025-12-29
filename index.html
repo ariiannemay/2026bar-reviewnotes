@@ -480,12 +480,12 @@ align-items: center; /* Centers trash icon with text */
 </div>
 
 <div class="w-full mb-6 border-b pb-4" id="subject-tabs">
-    <button onclick="switchSubject('poli')" class="sub-tab-btn active" id="sub-btn-poli" data-sub="poli">Political Law</button>
+    <button onclick="switchSubject('rem')" class="sub-tab-btn" id="sub-btn-rem" data-sub="rem">Remedial Law</button>
+    <button onclick="switchSubject('crim')" class="sub-tab-btn" id="sub-btn-crim" data-sub="crim">Criminal Law</button>
     <button onclick="switchSubject('lab')" class="sub-tab-btn" id="sub-btn-lab" data-sub="lab">Labor Law</button>
     <button onclick="switchSubject('civ')" class="sub-tab-btn" id="sub-btn-civ" data-sub="civ">Civil Law</button>
     <button onclick="switchSubject('tax')" class="sub-tab-btn" id="sub-btn-tax" data-sub="tax">Commercial Law</button>
-    <button onclick="switchSubject('crim')" class="sub-tab-btn" id="sub-btn-crim" data-sub="crim">Criminal Law</button>
-    <button onclick="switchSubject('rem')" class="sub-tab-btn" id="sub-btn-rem" data-sub="rem">Remedial Law</button>
+    <button onclick="switchSubject('poli')" class="sub-tab-btn active" id="sub-btn-poli" data-sub="poli">Political Law</button>
 </div>
 
                 <div id="subject-notes-container" class="space-y-4"></div>
@@ -1228,43 +1228,93 @@ function toggleLinkModal(show) {
 }
 
 /* START EDITING HERE */
+/* START EDITING HERE */
 function exportSubjectNotes(sub) {
     const syllabus = SUBJECTS[sub];
+    const btn = document.getElementById('sub-btn-' + sub);
+    const subjectName = btn ? btn.innerText.split('(')[0].trim() : sub.toUpperCase();
     const themeColor = getActiveThemeColor(sub);
+    
     const printWindow = window.open('', '_blank');
     
-    let printTemplate = `<style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap');
-        .pdf-wrap { font-family: 'Inter', sans-serif; padding: 40px; color: #1f2937; }
-        .depth-1 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: ${themeColor}; margin-top: 30px; border-bottom: 2px solid ${themeColor}20; }
-        .depth-2 { font-weight: 900; font-size: 14px; margin-top: 15px; text-transform: uppercase; color: #4b5563; }
-        .depth-3 { font-weight: 800; font-size: 12px; margin-top: 10px; color: #6b7280; }
-        .depth-4, .depth-5 { font-weight: 700; font-size: 11px; margin-top: 8px; font-style: italic; }
-        .note-body { white-space: pre-wrap; font-size: 12px; line-height: 1.6; margin: 5px 0 15px 20px; padding-left: 10px; border-left: 1px solid #eee; }
-    </style><div class="pdf-wrap">`;
+    // RESTORING THE BEAUTIFUL BRANDING & HEADER
+    let printTemplate = `
+        <html>
+        <head>
+            <title>#AweSAMBar2026 - ${subjectName} Notes</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap');
+                body { font-family: 'Inter', sans-serif; padding: 40px; color: #1a1a1a; }
+                
+                /* The beautiful border and title from your previous version */
+                .header-line { border-bottom: 5px solid ${themeColor}; margin-bottom: 30px; padding-bottom: 10px; }
+                .subject-title { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: ${themeColor}; letter-spacing: 2px; }
+                
+                /* Nesting & Depth Styles */
+                .depth-1 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: ${themeColor}; margin-top: 35px; border-bottom: 2px solid ${themeColor}20; padding-bottom: 5px; }
+                .depth-2 { font-weight: 900; font-size: 15px; margin-top: 15px; text-transform: uppercase; color: #374151; }
+                .depth-3 { font-weight: 800; font-size: 13px; margin-top: 10px; color: #4b5563; }
+                .depth-4, .depth-5 { font-weight: 700; font-size: 11px; margin-top: 8px; font-style: italic; color: #6b7280; }
+                
+                /* Note styling with the left accent border */
+                .note-text { white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: #1f2937; margin: 8px 0 20px 20px; padding-left: 12px; border-left: 2px solid #e5e7eb; }
+                
+                /* Footer */
+                .footer { margin-top: 60px; font-size: 11px; color: #9ca3af; text-align: center; border-top: 1px solid #eee; padding-top: 20px; font-weight: 600; }
+            </style>
+        </head>
+        <body>
+            <div class="header-line">
+                <div class="subject-title">#AweSAMBar2026 • ${subjectName}</div>
+                <div style="font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; margin-top: 5px;">
+                   Review Notes • As of ${new Date().toLocaleDateString()}
+                </div>
+            </div>
+    `;
 
+    // Process the Syllabus with dynamic nesting
     syllabus.forEach((item, i) => {
+        // A "Note" is any item that does not have a child following it
         const isNote = !(i + 1 < syllabus.length && syllabus[i+1].depth > item.depth);
-        const indent = (item.depth - 1) * 15;
+        const indent = (item.depth - 1) * 20; // 20px indentation per level
         
         printTemplate += `<div class="depth-${item.depth}" style="margin-left: ${indent}px">${item.topic}</div>`;
         
         if (isNote) {
-            // Re-calculate the key path exactly like the UI logic
-            let path = []; let d = item.depth;
-            for(let j=i-1; j>=0; j--) { if(syllabus[j].depth < d) { path.unshift(syllabus[j].topic); d = syllabus[j].depth; } }
+            // Re-calculate the specific storage key path for this deep item
+            let path = [];
+            let currentD = item.depth;
+            for (let j = i - 1; j >= 0; j--) {
+                if (syllabus[j].depth < currentD) {
+                    path.unshift(syllabus[j].topic);
+                    currentD = syllabus[j].depth;
+                }
+            }
             const key = `note_${sub}_${path.join('_')}_${item.topic}`;
-            const note = localStorage.getItem(key) || "<i>No notes.</i>";
-            printTemplate += `<div class="note-body" style="margin-left: ${indent + 20}px">${note}</div>`;
+            const noteContent = localStorage.getItem(key) || "<i>No notes recorded for this topic.</i>";
+            
+            printTemplate += `<div class="note-text" style="margin-left: ${indent + 25}px">${noteContent}</div>`;
         }
     });
 
-    printTemplate += `</div>`;
+    // Re-adding the "blabla" footer you loved! lol
+    printTemplate += `
+            <div class="footer">
+                This document was generated by the #AweSAMBar2026 Tracker (2026bar-reviewtracker.vercel.app)<br><br>Faith. Grit. Determination.
+            </div>
+        </body>
+        </html>
+    `;
+
     printWindow.document.write(printTemplate);
     printWindow.document.close();
-    setTimeout(() => { printWindow.print(); }, 500);
+    
+    setTimeout(() => {
+        printWindow.print();
+    }, 500);
 }
-
+/* END EDITING HERE */
 
 </script>
 
