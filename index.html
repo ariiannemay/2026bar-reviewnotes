@@ -4,7 +4,7 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review & To-Do Module Integration</title>
+    <title>2026 Bar Review Notes</title>
     <link rel="icon" href="https://raw.githubusercontent.com/ariiannemay/2026-Bar-Exam-Tracker/main/Images/LAWLOGO_FAVICON.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1249,7 +1249,6 @@ function toggleLinkModal(show) {
 }
 
 /* START EDITING HERE */
-/* START EDITING HERE */
 function exportSubjectNotes(sub) {
     const syllabus = SUBJECTS[sub];
     const btn = document.getElementById('sub-btn-' + sub);
@@ -1258,42 +1257,17 @@ function exportSubjectNotes(sub) {
     
     const printWindow = window.open('', '_blank');
     
-    // Helper function to escape HTML special characters
     function escapeHtml(text) {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    // REDUCED PADDING: Changed from 40px to 20px for wider content
     let printTemplate = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>${subjectName} Notes</title>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
-            <style>
-                @page {
-                    margin: 0.5in; /* Adjust as needed (e.g., 0.75in for smaller margins) */
-                    size: letter portrait; /* Or A4 if preferred */
-                }
-                body {
-                    margin: 0;
-                    padding: 0.5in; /* Inner padding for content */
-                    font-family: 'Inter', sans-serif;
-                    color: #1a1a1a;
-                }
-                /* Add page breaks for sections if content is very long */
-                .section-break { page-break-before: always; }
-                /* Your existing styles can go here if needed */
-            </style>
-        </head>
-        <body>
-            <div style="border-bottom: 5px solid ${themeColor}; margin-bottom: 30px; padding-bottom: 10px;">
-                <div style="font-family: 'Bebas Neue', cursive; font-size: 36px; color: ${themeColor}; letter-spacing: 2px; line-height: 1;">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+        <div style="font-family: 'Inter', sans-serif; padding: 20px; color: #1a1a1a;">
+            
+            <div style="border-bottom: 5px solid ${themeColor}; margin-bottom: 20px; padding-bottom: 10px;">
+                <div style="font-family: 'Bebas Neue', cursive; font-size: 48px; color: ${themeColor}; letter-spacing: 2px; line-height: 1;">
                     #AweSAMBar2026 • ${subjectName}
                 </div>
                 <div style="font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; margin-top: 5px;">
@@ -1305,77 +1279,61 @@ function exportSubjectNotes(sub) {
         const isNote = !(i + 1 < syllabus.length && syllabus[i+1].depth > item.depth);
         const indent = (item.depth - 1) * 20;
         
-        let depthStyle = `margin-left: ${indent}px; margin-top: 15px; font-family: 'Inter', sans-serif;`;
+        // TIGHTER MARGINS: Reduced top margin from 15px to 8px
+        let depthStyle = `margin-left: ${indent}px; margin-top: 8px; font-family: 'Inter', sans-serif;`;
         
         if (item.depth === 1) {
-            depthStyle = `font-family: 'Inter', sans-serif; font-size: 18px; color: ${themeColor}; margin-top: 40px; margin-bottom: 10px; padding: 8px 15px; background-color: ${themeColor}08; border-left: 5px solid ${themeColor}; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;`;
+            depthStyle = `font-family: 'Inter', sans-serif; font-size: 20px; color: ${themeColor}; margin-top: 30px; margin-bottom: 10px; padding: 8px 15px; background-color: ${themeColor}08; border-left: 5px solid ${themeColor}; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;`;
         } else if (item.depth === 2) {
-            depthStyle += `font-weight: 900; font-size: 14px; text-transform: uppercase; color: #374151; border-bottom: 1px solid #eee; padding-bottom: 3px;`;
+            depthStyle += `font-weight: 900; font-size: 15px; text-transform: uppercase; color: #374151; border-bottom: 1px solid #eee; padding-bottom: 3px;`;
         } else if (item.depth === 3) {
-            depthStyle += `font-weight: 800; font-size: 12px; color: #4b5563;`;
+            depthStyle += `font-weight: 800; font-size: 13px; color: #4b5563;`;
         } else {
-            depthStyle += `font-weight: 700; font-size: 10px; font-style: italic; color: #6b7280;`;
+            depthStyle += `font-weight: 700; font-size: 11px; font-style: italic; color: #6b7280;`;
         }
         
         printTemplate += `<div style="${depthStyle}">${item.topic}</div>`;
         
-if (isNote) {
-    let path = [];
-    let currentD = item.depth;
-    for (let j = i - 1; j >= 0; j--) {
-        if (syllabus[j].depth < currentD) {
-            path.unshift(syllabus[j].topic);
-            currentD = syllabus[j].depth;
+        if (isNote) {
+            let path = [];
+            let currentD = item.depth;
+            for (let j = i - 1; j >= 0; j--) {
+                if (syllabus[j].depth < currentD) {
+                    path.unshift(syllabus[j].topic);
+                    currentD = syllabus[j].depth;
+                }
+            }
+            const key = `note_${sub}_${path.join('_')}_${item.topic}`;
+            let rawNote = localStorage.getItem(key) || "";
+            const isEmpty = rawNote.trim() === "";
+
+            // LOGIC: If empty, show a blank space with a min-height for handwriting
+            printTemplate += `
+                <div style="
+                    display: block;
+                    width: auto;
+                    margin-left: ${indent + 20}px; 
+                    margin-top: 5px;
+                    margin-bottom: 15px;
+                    padding-left: 15px; 
+                    border-left: 2px solid #e5e7eb; 
+                    font-family: 'Inter', sans-serif;
+                    min-height: ${isEmpty ? '40px' : 'auto'};
+                ">
+                    <div style="
+                        white-space: pre-wrap; 
+                        font-size: 13px; 
+                        line-height: 1.6; 
+                        color: #1f2937; 
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                    ">
+                        ${isEmpty ? '' : escapeHtml(rawNote)}
+                    </div>
+                </div>`;
         }
-    }
-    const key = `note_${sub}_${path.join('_')}_${item.topic}`;
-    let rawNote = localStorage.getItem(key);
-    const isEmpty = !rawNote || rawNote.trim() === "";
-
-    let noteContent;
-    let textAlign = isEmpty ? "center" : "justify";
-    let color = isEmpty ? "#9ca3af" : "#1f2937";
-    let fontStyle = isEmpty ? "italic" : "normal";
-    let paddingVertical = isEmpty ? "20px 0" : "8px 0";
-
-    if (isEmpty) {
-        noteContent = "No notes recorded.";
-    } else {
-        // Only escape when there is actual user input
-        noteContent = escapeHtml(rawNote);
-    }
-
-    printTemplate += `
-        <div style="
-            display: block;
-            width: auto;
-            margin-left: ${indent + 20}px; 
-            margin-top: 5px;
-            margin-bottom: 25px;
-            padding-left: 15px; 
-            border-left: 2px solid #e5e7eb; 
-            font-family: 'Inter', sans-serif;
-        ">
-            <div style="
-                white-space: pre-wrap; 
-                font-size: 13px; 
-                line-height: 1.7; 
-                color: ${color};
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                text-align: ${textAlign};
-                text-align-last: left;
-                hyphens: auto;
-                font-style: ${fontStyle};
-                padding: ${paddingVertical};
-            ">
-                ${noteContent}
-            </div>
-        </div>`;
-}
     });
 
-    // FOOTER: Bebas Neue
     printTemplate += `
             <div style="margin-top: 60px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
                 <div style="font-family: 'Bebas Neue', cursive; font-size: 16px; color: #9ca3af; letter-spacing: 1px;">
@@ -1385,17 +1343,14 @@ if (isNote) {
                     • Faith. Grit. Determination. •
                 </div>
             </div>
-        </body>
-        </html>`;
+        </div>`;
 
     printWindow.document.write(printTemplate);
     printWindow.document.close();
     
-    setTimeout(() => {
-        printWindow.print();
-    }, 800);
+    setTimeout(() => { printWindow.print(); }, 800);
 }
-
+/* END EDITING HERE */
 
 </script>
 
