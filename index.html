@@ -9,12 +9,6 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="poli_logic.js"></script>
-    <script src="lab_logic.js"></script>
-    <script src="civ_logic.js"></script>
-    <script src="comm_logic.js"></script>
-    <script src="crim_logic.js"></script>
-    <script src="rem_logic.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&family=Dancing+Script:wght@600&display=swap');
@@ -437,6 +431,16 @@ align-items: center; /* Centers trash icon with text */
     transition: width 0.5s ease, background-color 0.5s ease; /* Added background-color transition */
 }
 
+/* START EDITING HERE */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+/* END EDITING HERE */
+
 </style>
 </head>
 
@@ -595,100 +599,139 @@ const SUBJECTS = {
         }
 
 /* START EDITING HERE */
-function switchSubject(sub) {
-    const container = document.getElementById('subject-notes-container');
-    const syllabus = SUBJECTS[sub];
-    if (!container || !syllabus || syllabus.length === 0) return;
+const loadedScripts = new Set();
 
-    // Update Tab UI
+function lazyLoadSubject(sub, callback) {
+    if (loadedScripts.has(sub)) {
+        callback();
+        return;
+    }
+
+    // Show the spinner in the container while waiting
+    const container = document.getElementById('subject-notes-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-20 text-[#B266FF]">
+                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-4"></i>
+                <span class="header-font text-sm tracking-widest uppercase opacity-70">Loading Syllabus...</span>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    const scriptMap = {
+        poli: 'poli_logic.js',
+        lab: 'lab_logic.js',
+        civ: 'civ_logic.js',
+        tax: 'comm_logic.js',
+        crim: 'crim_logic.js',
+        rem: 'rem_logic.js'
+    };
+
+    const script = document.createElement('script');
+    script.src = scriptMap[sub];
+    script.onload = () => {
+        const syllabusMap = {
+            poli: typeof POLI_SYLLABUS !== 'undefined' ? POLI_SYLLABUS : [],
+            lab: typeof LAB_SYLLABUS !== 'undefined' ? LAB_SYLLABUS : [],
+            civ: typeof CIV_SYLLABUS !== 'undefined' ? CIV_SYLLABUS : [],
+            tax: typeof COMM_TAX_SYLLABUS !== 'undefined' ? COMM_TAX_SYLLABUS : [],
+            crim: typeof CRIM_SYLLABUS !== 'undefined' ? CRIM_SYLLABUS : [],
+            rem: typeof REM_ETHICS_SYLLABUS !== 'undefined' ? REM_ETHICS_SYLLABUS : []
+        };
+        SUBJECTS[sub] = syllabusMap[sub];
+        loadedScripts.add(sub);
+        callback();
+    };
+    document.head.appendChild(script);
+}
+
+function switchSubject(sub) {
+    // UI Update for tabs happens immediately
     document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById('sub-btn-' + sub);
     if (activeBtn) activeBtn.classList.add('active');
 
-    const activeColor = getActiveThemeColor(sub);
-    const subjectTitle = activeBtn.innerText.split('(')[0].trim();
+    lazyLoadSubject(sub, () => {
+        const container = document.getElementById('subject-notes-container');
+        const syllabus = SUBJECTS[sub];
+        if (!container || !syllabus || syllabus.length === 0) return;
 
-    // Helper: Find the path of parents for unique save keys
-    function getParentPath(index) {
-        let path = [];
-        let currentDepth = syllabus[index].depth;
-        for (let i = index - 1; i >= 0; i--) {
-            if (syllabus[i].depth < currentDepth) {
-                path.unshift(syllabus[i].topic);
-                currentDepth = syllabus[i].depth;
+        const activeColor = getActiveThemeColor(sub);
+        const subjectTitle = activeBtn.innerText.split('(')[0].trim();
+
+        // Helper: Parent path for keys
+        function getParentPath(index) {
+            let path = [];
+            let currentDepth = syllabus[index].depth;
+            for (let i = index - 1; i >= 0; i--) {
+                if (syllabus[i].depth < currentDepth) {
+                    path.unshift(syllabus[i].topic);
+                    currentDepth = syllabus[i].depth;
+                }
             }
+            return path.join('_');
         }
-        return path.join('_');
-    }
 
-    // Recursive function to build nested HTML
-    function buildBranch(startIndex) {
-        let html = '';
-        let i = startIndex;
+        // Recursive Branch Builder
+        function buildBranch(startIndex) {
+            let html = '';
+            let i = startIndex;
+            while (i < syllabus.length) {
+                const item = syllabus[i];
+                if (startIndex > 0 && item.depth <= syllabus[startIndex-1].depth) break;
+                const isParent = (i + 1 < syllabus.length && syllabus[i+1].depth > item.depth);
+                const parentPath = getParentPath(i);
+                const storageKey = `note_${sub}_${parentPath}_${item.topic}`;
 
-        while (i < syllabus.length) {
-            const item = syllabus[i];
-            
-            // If we hit an item shallower than our starting point, stop this branch
-            if (startIndex > 0 && item.depth <= syllabus[startIndex-1].depth) break;
-
-            const isParent = (i + 1 < syllabus.length && syllabus[i+1].depth > item.depth);
-            const parentPath = getParentPath(i);
-            const storageKey = `note_${sub}_${parentPath}_${item.topic}`;
-
-            if (isParent) {
-                // Topic with children -> Create Collapsible
-                html += `
-                    <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm ${item.depth > 1 ? 'ml-4 mt-2' : ''}">
-                        <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
-                                 style="border-color: ${item.depth === 1 ? activeColor : '#E5E7EB'}">
-                            <div class="flex flex-col text-left">
+                if (isParent) {
+                    html += `
+                        <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm ${item.depth > 1 ? 'ml-4 mt-2' : ''}">
+                            <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
+                                     style="border-color: ${item.depth === 1 ? activeColor : '#E5E7EB'}">
                                 <span class="uppercase tracking-wider">${item.topic}</span>
-                            </div>
-                            <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180 opacity-40"></i>
-                        </summary>
-                        <div class="p-2 bg-gray-50/30">
-                            ${buildBranch(i + 1)}
-                        </div>
-                    </details>`;
-                
-                // Skip ahead past the children we just processed
-                let nextIdx = i + 1;
-                while (nextIdx < syllabus.length && syllabus[nextIdx].depth > item.depth) { nextIdx++; }
-                i = nextIdx;
-            } else {
-                // Topic with NO children -> Create Note Box
-                html += `
-                    <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner mb-3 ${item.depth > 1 ? 'ml-4' : ''}">
-                        <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest text-left">${item.topic}</label>
-                        <textarea 
-                            class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden text-[13px]" 
-                            placeholder="Take notes..."
-                            oninput="autoExpand(this); saveNoteRecursive('${storageKey}', this.value); updateProgress()"
-                        >${localStorage.getItem(storageKey) || ''}</textarea>
-                    </div>`;
-                i++;
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180 opacity-40"></i>
+                            </summary>
+                            <div class="p-2 bg-gray-50/30">${buildBranch(i + 1)}</div>
+                        </details>`;
+                    let nextIdx = i + 1;
+                    while (nextIdx < syllabus.length && syllabus[nextIdx].depth > item.depth) { nextIdx++; }
+                    i = nextIdx;
+                } else {
+                    html += `
+                        <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner mb-3 ${item.depth > 1 ? 'ml-4' : ''}">
+                            <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest">${item.topic}</label>
+                            <textarea class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden text-[13px]" 
+                                      placeholder="Take notes..."
+                                      oninput="autoExpand(this); saveNoteRecursive('${storageKey}', this.value); updateProgress()"
+                            >${localStorage.getItem(storageKey) || ''}</textarea>
+                        </div>`;
+                    i++;
+                }
             }
+            return html;
         }
-        return html;
-    }
 
-    container.innerHTML = `
-        <div class="flex justify-between items-center mb-6 px-2">
-            <h3 class="header-font text-2xl tracking-widest text-[#330066] uppercase">${subjectTitle}</h3>
-            <button onclick="exportSubjectNotes('${sub}')" class="export-btn">
-                <i data-lucide="file-text" class="w-3 h-3"></i> Export PDF
-            </button>
-        </div>
-        <div id="notes-list-wrapper">
-            ${buildBranch(0)}
-        </div>
-    `;
+        container.innerHTML = `
+            <div class="flex justify-between items-center mb-6 px-2">
+                <h3 class="header-font text-2xl tracking-widest text-[#330066] uppercase">${subjectTitle}</h3>
+                <button onclick="exportSubjectNotes('${sub}')" class="export-btn">
+                    <i data-lucide="file-text" class="w-3 h-3"></i> Export PDF
+                </button>
+            </div>
+            <div id="notes-list-wrapper">${buildBranch(0)}</div>
+        `;
 
-    lucide.createIcons();
-    updateProgress();
-    setTimeout(() => { document.querySelectorAll('.auto-expand').forEach(autoExpand); }, 100);
+        lucide.createIcons();
+        updateProgress();
+        // Optimized auto-expand: only visible ones
+        setTimeout(() => { 
+            document.querySelectorAll('#notes-list-wrapper > .auto-expand, #notes-list-wrapper > div > .auto-expand').forEach(autoExpand); 
+        }, 100);
+    });
 }
+/* END EDITING HERE */
+
 
 // Global helper for the recursion
 function saveNoteRecursive(key, val) {
@@ -1149,11 +1192,14 @@ function renderLinks() {
 }
  
 // --- INITIALIZE ---
-        window.onload = () => {
-            switchSubject('rem');
-            renderTodoView();
-renderLinks();
-        };
+/* START EDITING HERE */
+window.onload = () => {
+    // This will now trigger the lazy loader for your default subject
+    switchSubject('rem'); 
+    renderTodoView();
+    renderLinks();
+};
+/* END EDITING HERE */
 
 /* --- THEMED MODAL SYSTEM --- */
 function showThemedConfirm(title, message, onConfirm) {
