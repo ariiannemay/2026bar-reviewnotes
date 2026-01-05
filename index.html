@@ -979,14 +979,14 @@ if (todoMode === 'daily') {
         }
         calendarHtml += '</div>';
 
-        container.innerHTML = `
+container.innerHTML = `
             <div class="daily-layout-grid">
                 <div class="space-y-4">
-                    <div class="flex items-center gap-4">
-                        <button onclick="addTodoItem('${dateKey}')" class="text-sm font-black text-[#B266FF] border-2 border-dashed border-[#B266FF]/30 px-6 py-2 rounded-xl uppercase flex items-center gap-2 hover:bg-[#B266FF] hover:text-white transition-all">
+                    <div class="flex items-center gap-2">
+                        <button onclick="addTodoItem('${dateKey}')" class="flex-grow text-sm font-black text-[#B266FF] border-2 border-dashed border-[#B266FF]/30 px-6 py-2 rounded-xl uppercase flex items-center justify-center gap-2 hover:bg-[#B266FF] hover:text-white transition-all">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i> ADD A TASK
                         </button>
-                        ${tasks.length > 0 ? `<button onclick="clearDayTasks('${dateKey}')" class="clear-all-btn">Clear All</button>` : ''}
+                        ${tasks.length > 0 ? `<button onclick="clearDayTasks('${dateKey}')" class="clear-all-btn whitespace-nowrap px-4 py-2 h-full rounded-xl border-2">Clear All</button>` : ''}
                     </div>
                     <div id="list-${dateKey}">${renderTaskList(dateKey, 'large')}</div>
                 </div>
