@@ -228,9 +228,10 @@
         padding: 1rem;
         border: 1px solid #f3e8ff;
         height: 100%; 
-        min-height: 200px; /* Set this to match your sidebar length */
+        min-height: 200px;
         display: flex;
         flex-direction: column;
+        text-align: left; /* Back to left-aligned! */
     }
 
     /* Optional: Ensure Saturday also follows a similar height or stays larger */
@@ -470,7 +471,31 @@ align-items: center; /* Centers trash icon with text */
 .animate-spin {
     animation: spin 1s linear infinite;
 }
-/* END EDITING HERE */
+
+.confetti-piece {
+        position: fixed;
+        top: -10px;
+        width: 10px;
+        height: 10px;
+        z-index: 9999;
+        pointer-events: none;
+        animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+        to {
+            transform: translateY(105vh) rotate(360deg);
+        }
+    }
+    
+    @keyframes successPop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.25); }
+        100% { transform: scale(1.1); }
+    }
+    .success-pop {
+        animation: successPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
 
 </style>
 </head>
@@ -977,29 +1002,50 @@ if (todoMode === 'daily') {
         }
         calendarSidebarHtml += '</div>';
 
-        // BUILD THE 7-DAY CARDS
+// BUILD THE 7-DAY CARDS
         let daysHtml = '';
         for (let i = 0; i < 7; i++) {
             const dayDate = new Date(startOfWeek);
             dayDate.setDate(startOfWeek.getDate() + i);
             const dateKey = dayDate.toDateString();
-            const colFullDate = dayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             
-            // Check if Saturday (Day 6)
+            // Fix: Filter out empty placeholder tasks for the counter
+            const tasks = (todoStorage[dateKey] || []).filter(t => t.text.trim() !== "");
+            const totalTasks = tasks.length;
+            const doneTasks = tasks.filter(t => t.done).length;
+            
+            const isFinished = totalTasks > 0 && doneTasks === totalTasks;
+            const progressText = `${doneTasks}/${totalTasks} DONE`;
+
+            const colFullDate = dayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             const isSaturday = dayDate.getDay() === 6;
             const spanClass = isSaturday ? 'saturday-span' : '';
     
+            // Dynamic badge color and animation
+            const badgeClass = isFinished 
+                ? 'bg-green-500 text-white border-green-600 scale-110 shadow-lg success-pop' 
+                : 'bg-purple-50 text-[#B266FF] border-purple-100';
+
             daysHtml += `
                 <div class="weekly-day-card ${spanClass}">
-                    <div class="border-b-2 border-[#B266FF] mb-3 pb-1">
-                        <span class="block font-black text-[#330066] text-sm uppercase tracking-widest">${dayDate.toLocaleDateString('en-US', {weekday:'long'})}</span>
-                        <span class="block text-[10px] text-gray-400 font-bold uppercase">${colFullDate}</span>
+                    <div class="flex items-start justify-between border-b-2 border-[#B266FF] mb-3 pb-2">
+                        <div>
+                            <span class="block font-black text-[#330066] text-sm uppercase tracking-widest">${dayDate.toLocaleDateString('en-US', {weekday:'long'})}</span>
+                            <span class="block text-[10px] text-gray-400 font-bold uppercase">${colFullDate}</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-tighter transition-all duration-300 ${badgeClass}">
+                                ${progressText}
+                            </span>
+                        </div>
                     </div>
+                    
                     <div class="flex gap-1 w-full mb-3">
                         <button onclick="addTodoItem('${dateKey}')" class="add-task-btn-thin flex-grow border border-dashed border-purple-200 rounded py-1 text-[9px] font-bold text-[#B266FF] uppercase hover:bg-purple-50 transition-all">
                             + Add Task
                         </button>
                     </div>
+
                     <div id="list-${dateKey}" class="w-full space-y-1">${renderTaskList(dateKey, 'small')}</div>
                 </div>`;
         }
@@ -1070,12 +1116,8 @@ function generateMiniCal(monthDate, selectedDate) {
 function renderTaskList(dateKey, sizeClass) {
     let tasks = todoStorage[dateKey] || [];
     
-    // Placeholder Logic: If no tasks exist for this day, show one empty row
-    if (tasks.length === 0) {
-        tasks = [{ text: '', done: false }];
-        // Initialize storage for this date so the first keystroke saves correctly
-        todoStorage[dateKey] = tasks;
-    }
+// If truly empty, return empty string so the card just shows the "Add Task" button
+    if (tasks.length === 0) return '';
 
     const inputClass = sizeClass === 'large' ? 'task-input-large' : 'task-input-small';
     const iconSize = sizeClass === 'large' ? 'w-5 h-5' : 'w-3.5 h-3.5';
@@ -1108,9 +1150,32 @@ function renderTaskList(dateKey, sizeClass) {
             saveAndRefresh();
         }
 
-        function toggleTodo(dateKey, i) { 
+function toggleTodo(dateKey, i) { 
             todoStorage[dateKey][i].done = !todoStorage[dateKey][i].done; 
+            
+            // Check for confetti trigger
+            const tasks = (todoStorage[dateKey] || []).filter(t => t.text.trim() !== "");
+            const totalTasks = tasks.length;
+            const doneTasks = tasks.filter(t => t.done).length;
+
+            if (totalTasks > 0 && doneTasks === totalTasks && todoStorage[dateKey][i].done) {
+                createConfetti();
+            }
+            
             saveAndRefresh(); 
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-piece';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = ['#B266FF', '#330066', '#FFD700', '#22c55e'][Math.floor(Math.random() * 4)];
+                confetti.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                confetti.style.opacity = Math.random();
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
         }
 
 function editTodo(dateKey, i, val) { 
