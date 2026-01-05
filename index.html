@@ -496,7 +496,13 @@ align-items: center; /* Centers trash icon with text */
     .success-pop {
         animation: successPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-
+/* Animation for search results filtering */
+    #notes-list-wrapper details.hidden {
+        display: none;
+    }
+    #notes-list-wrapper details:not(.hidden) {
+        animation: fadeIn 0.2s ease-out;
+    }
 </style>
 </head>
 
@@ -534,6 +540,7 @@ align-items: center; /* Centers trash icon with text */
         <div id="tab-notes" class="tab-content active">
             <div class="bg-white p-4 rounded-xl shadow border border-gray-200">
 
+
 <div class="mb-6 px-4">
     <div class="flex justify-between items-end mb-2">
         <span class="header-font text-xs tracking-widest text-[#330066]">OVERALL NOTES PROGRESS</span>
@@ -541,6 +548,15 @@ align-items: center; /* Centers trash icon with text */
     </div>
     <div id="master-progress-wrapper">
         <div id="master-progress-fill"></div>
+    </div>
+</div>
+
+<div class="px-3 mb-3">
+    <div class="relative group">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#B266FF] transition-colors"></i>
+        <input type="text" id="syllabus-search" placeholder="Search topics (e.g. 'Due Process')..." 
+               class="w-full pl-10 pr-4 py-2 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none focus:border-[#B266FF] focus:bg-white transition-all text-sm font-medium"
+               oninput="handleSyllabusSearch(this.value)">
     </div>
 </div>
 
@@ -703,7 +719,8 @@ function lazyLoadSubject(sub, callback) {
 }
 
 function switchSubject(sub) {
-    // UI Update for tabs happens immediately
+const searchInput = document.getElementById('syllabus-search');
+    if (searchInput) searchInput.value = '';
     document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById('sub-btn-' + sub);
     if (activeBtn) activeBtn.classList.add('active');
@@ -711,83 +728,79 @@ function switchSubject(sub) {
     lazyLoadSubject(sub, () => {
         const container = document.getElementById('subject-notes-container');
         const syllabus = SUBJECTS[sub];
-        if (!container || !syllabus || syllabus.length === 0) return;
+        if (!container || !syllabus) return;
 
-        const activeColor = getActiveThemeColor(sub);
         const subjectTitle = activeBtn.innerText.split('(')[0].trim();
+        const activeColor = getActiveThemeColor(sub);
 
-        // Helper: Parent path for keys
-        function getParentPath(index) {
-            let path = [];
-            let currentDepth = syllabus[index].depth;
-            for (let i = index - 1; i >= 0; i--) {
-                if (syllabus[i].depth < currentDepth) {
-                    path.unshift(syllabus[i].topic);
-                    currentDepth = syllabus[i].depth;
-                }
-            }
-            return path.join('_');
-        }
-
-        // Recursive Branch Builder
-        function buildBranch(startIndex) {
-            let html = '';
-            let i = startIndex;
-            while (i < syllabus.length) {
-                const item = syllabus[i];
-                if (startIndex > 0 && item.depth <= syllabus[startIndex-1].depth) break;
-                const isParent = (i + 1 < syllabus.length && syllabus[i+1].depth > item.depth);
-                const parentPath = getParentPath(i);
-                const storageKey = `note_${sub}_${parentPath}_${item.topic}`;
-
-                if (isParent) {
-                    html += `
-                        <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm ${item.depth > 1 ? 'ml-4 mt-2' : ''}">
-                            <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
-                                     style="border-color: ${item.depth === 1 ? activeColor : '#E5E7EB'}">
-                                <span class="uppercase tracking-wider">${item.topic}</span>
-                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180 opacity-40"></i>
-                            </summary>
-                            <div class="p-2 bg-gray-50/30">${buildBranch(i + 1)}</div>
-                        </details>`;
-                    let nextIdx = i + 1;
-                    while (nextIdx < syllabus.length && syllabus[nextIdx].depth > item.depth) { nextIdx++; }
-                    i = nextIdx;
-                } else {
-                    html += `
-                        <div class="bg-white p-4 rounded-lg border border-purple-100 shadow-inner mb-3 ${item.depth > 1 ? 'ml-4' : ''}">
-                            <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest">${item.topic}</label>
-                            <textarea class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden text-[13px]" 
-                                      placeholder="Take notes..."
-                                      oninput="autoExpand(this); saveNoteRecursive('${storageKey}', this.value); updateProgress()"
-                            >${localStorage.getItem(storageKey) || ''}</textarea>
-                        </div>`;
-                    i++;
-                }
-            }
-            return html;
-        }
-
-        container.innerHTML = `
+        // Render only Top Level (Depth 1) to keep it fast
+        let html = `
             <div class="flex justify-between items-center mb-6 px-2">
                 <h3 class="header-font text-2xl tracking-widest text-[#330066] uppercase">${subjectTitle}</h3>
                 <button onclick="exportSubjectNotes('${sub}')" class="export-btn">
                     <i data-lucide="file-text" class="w-3 h-3"></i> Export PDF
                 </button>
             </div>
-            <div id="notes-list-wrapper">${buildBranch(0)}</div>
-        `;
+            <div id="notes-list-wrapper">`;
 
+        syllabus.forEach((item, index) => {
+            if (item.depth === 1) {
+                html += `
+                    <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm" 
+                             onclick="renderSubTopics(this, '${sub}', ${index})">
+                        <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
+                                 style="border-color: ${activeColor}">
+                            <span class="uppercase tracking-wider">${item.topic}</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180 opacity-40"></i>
+                        </summary>
+                        <div class="p-2 bg-gray-50/30 sub-content-area">
+                            <div class="flex justify-center py-4"><i data-lucide="loader-2" class="animate-spin text-purple-300"></i></div>
+                        </div>
+                    </details>`;
+            }
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
         lucide.createIcons();
         updateProgress();
-        // Optimized auto-expand: only visible ones
-        setTimeout(() => { 
-            document.querySelectorAll('#notes-list-wrapper > .auto-expand, #notes-list-wrapper > div > .auto-expand').forEach(autoExpand); 
-        }, 100);
     });
 }
-/* END EDITING HERE */
 
+function renderSubTopics(detailsElement, sub, startIndex) {
+    const contentArea = detailsElement.querySelector('.sub-content-area');
+    if (contentArea.dataset.loaded === "true") return;
+
+    const syllabus = SUBJECTS[sub];
+    const fragment = document.createDocumentFragment();
+    let i = startIndex + 1;
+
+    while (i < syllabus.length && syllabus[i].depth > 1) {
+        const item = syllabus[i];
+        const parent = syllabus.slice(0, i).reverse().find(s => s.depth === 1);
+        const storageKey = `note_${sub}_${parent ? parent.topic : ''}_${item.topic}`;
+        
+        const div = document.createElement('div');
+        div.className = "bg-white p-4 rounded-lg border border-purple-100 shadow-inner mb-3 ml-4";
+        div.innerHTML = `
+            <label class="block text-[10px] font-black text-[#B266FF] uppercase mb-2 tracking-widest">${item.topic}</label>
+            <textarea class="auto-expand w-full bg-transparent border-none outline-none resize-none overflow-hidden text-[13px]" 
+                      placeholder="Take notes..."
+                      oninput="autoExpand(this); saveNoteRecursive('${storageKey}', this.value); updateProgress()"
+            >${localStorage.getItem(storageKey) || ''}</textarea>`;
+        fragment.appendChild(div);
+        i++;
+    }
+
+    contentArea.innerHTML = '';
+    contentArea.appendChild(fragment);
+    contentArea.dataset.loaded = "true";
+    
+    setTimeout(() => {
+        contentArea.querySelectorAll('textarea').forEach(autoExpand);
+        lucide.createIcons();
+    }, 10);
+}
 
 // Global helper for the recursion
 function saveNoteRecursive(key, val) {
@@ -1498,6 +1511,55 @@ function exportSubjectNotes(sub) {
     setTimeout(() => { printWindow.print(); }, 800);
 }
 /* END EDITING HERE */
+
+let searchTimeout;
+function handleSyllabusSearch(query) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const wrapper = document.getElementById('notes-list-wrapper');
+        const searchTerm = query.toLowerCase().trim();
+        
+        // Reset view if empty
+        if (!searchTerm) {
+            wrapper.querySelectorAll('details').forEach(d => {
+                d.classList.remove('hidden');
+                d.open = false;
+            });
+            return;
+        }
+
+        const sub = document.querySelector('.sub-tab-btn.active').dataset.sub;
+        const syllabus = SUBJECTS[sub];
+
+        wrapper.querySelectorAll('details').forEach((details, index) => {
+            const chapterIdx = parseInt(details.getAttribute('onclick').match(/\d+/)[0]);
+            const chapterText = syllabus[chapterIdx].topic.toLowerCase();
+            
+            // Check if chapter matches OR any subtopic matches
+            let hasMatch = chapterText.includes(searchTerm);
+            
+            // Peek at subtopics for this chapter
+            let i = chapterIdx + 1;
+            while (i < syllabus.length && syllabus[i].depth > 1) {
+                if (syllabus[i].topic.toLowerCase().includes(searchTerm)) {
+                    hasMatch = true;
+                    break;
+                }
+                i++;
+            }
+
+            if (hasMatch) {
+                details.classList.remove('hidden');
+                if (searchTerm.length > 2) {
+                    details.open = true;
+                    renderSubTopics(details, sub, chapterIdx); // Force render if match found
+                }
+            } else {
+                details.classList.add('hidden');
+            }
+        });
+    }, 300);
+}
 
 </script>
 
