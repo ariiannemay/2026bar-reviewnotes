@@ -204,9 +204,40 @@
 /* END EDITING HERE */
 
 
-    .mini-calendar-sidebar { border-left: 1px dashed #e5e7eb; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.mini-calendar-sidebar { border-left: 1px dashed #e5e7eb; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
     .weekly-calendar-footer { display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; }
     .weekly-calendar-footer .mini-cal { flex: 1; }
+
+/* Updated Weekly Planner Layout */
+    .weekly-planner-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px; /* Planner on left, Cal on right */
+        gap: 2rem;
+        align-items: start;
+    }
+
+.weekly-tasks-stack {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 columns for Sun-Fri */
+        gap: 1rem;
+    }
+
+.weekly-day-card {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #f3e8ff;
+        height: 100%; 
+        min-height: 200px; /* Set this to match your sidebar length */
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Optional: Ensure Saturday also follows a similar height or stays larger */
+    .weekly-day-card.saturday-span {
+        grid-column: 1 / -1;
+        min-height: 150px; 
+    }
 
     .mini-cal {
         background: #fff; border-radius: 8px; padding: 0.75rem; width: 100%;
@@ -923,11 +954,9 @@ if (todoMode === 'daily') {
                 </div>
                 ${calendarHtml}
             </div>`;
-    } else {
-
-title.innerText = "WEEKLY TASKS";
+} else {
+        title.innerText = "WEEKLY TASKS";
         const baseDate = new Date();
-        // Correct math: add the total day offset, THEN find the start of THAT week
         const viewingDate = new Date(baseDate);
         viewingDate.setDate(viewingDate.getDate() + todoOffset);
         
@@ -940,49 +969,56 @@ title.innerText = "WEEKLY TASKS";
         const options = { month: 'long', day: 'numeric', year: 'numeric' };
         dateDisplay.innerText = `${startOfWeek.toLocaleDateString('en-US', options)} - ${endOfWeek.toLocaleDateString('en-US', options)}`;
 
-        let gridHtml = `<div class="flex gap-4 min-w-[1000px]">`;
-
-for (let i = 0; i < 7; i++) {
-const dayDate = new Date(startOfWeek);
-            dayDate.setDate(startOfWeek.getDate() + i);
-            const dateKey = dayDate.toDateString();
-            const tasks = todoStorage[dateKey] || [];
-            const colMonthDay = dayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    
-gridHtml += `
-                <div class="todo-column flex-1 min-w-[140px] border-r border-dashed border-gray-200 last:border-0 px-2 flex flex-col items-center">
-                    <div class="day-pill-header">
-                        <span class="block font-black text-[#330066] leading-tight" style="font-size: 14px !important;">${dayDate.toLocaleDateString('en-US', {weekday:'short'}).toUpperCase()}</span>
-                        <span class="block text-[8px] text-[#B266FF] font-bold uppercase tracking-tighter">${colMonthDay}</span>
-                    </div>
-                    
-                    <div class="flex gap-1 w-full mb-2">
-                        <button onclick="addTodoItem('${dateKey}')" class="add-task-btn-thin flex-grow border border-dashed border-gray-300 rounded text-[9px] font-bold text-[#B266FF] uppercase hover:bg-gray-50 transition-all">
-                            + Add Task
-                        </button>
-                        ${tasks.length > 0 ? `<button onclick="clearDayTasks('${dateKey}')" class="clear-all-btn">Clear</button>` : ''}
-                    </div>
-
-                    <div id="list-${dateKey}" class="w-full space-y-1">${renderTaskList(dateKey, 'small')}</div>
-                </div>`;
-}
-        gridHtml += `</div>`;
-
-        let footerCals = '<div class="weekly-calendar-footer">';
+        // DEFINE THE SIDEBAR CALENDARS FIRST
+        let calendarSidebarHtml = '<div class="flex flex-col gap-4">';
         for (let i = -1; i <= 1; i++) {
             const calDate = new Date(viewingDate.getFullYear(), viewingDate.getMonth() + i, 1);
-            footerCals += generateMiniCal(calDate, viewingDate);
+            calendarSidebarHtml += generateMiniCal(calDate, viewingDate);
         }
-        footerCals += '</div>';
+        calendarSidebarHtml += '</div>';
 
-        container.innerHTML = gridHtml + footerCals;
-    }
+        // BUILD THE 7-DAY CARDS
+        let daysHtml = '';
+        for (let i = 0; i < 7; i++) {
+            const dayDate = new Date(startOfWeek);
+            dayDate.setDate(startOfWeek.getDate() + i);
+            const dateKey = dayDate.toDateString();
+            const colFullDate = dayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            
+            // Check if Saturday (Day 6)
+            const isSaturday = dayDate.getDay() === 6;
+            const spanClass = isSaturday ? 'saturday-span' : '';
+    
+            daysHtml += `
+                <div class="weekly-day-card ${spanClass}">
+                    <div class="border-b-2 border-[#B266FF] mb-3 pb-1">
+                        <span class="block font-black text-[#330066] text-sm uppercase tracking-widest">${dayDate.toLocaleDateString('en-US', {weekday:'long'})}</span>
+                        <span class="block text-[10px] text-gray-400 font-bold uppercase">${colFullDate}</span>
+                    </div>
+                    <div class="flex gap-1 w-full mb-3">
+                        <button onclick="addTodoItem('${dateKey}')" class="add-task-btn-thin flex-grow border border-dashed border-purple-200 rounded py-1 text-[9px] font-bold text-[#B266FF] uppercase hover:bg-purple-50 transition-all">
+                            + Add Task
+                        </button>
+                    </div>
+                    <div id="list-${dateKey}" class="w-full space-y-1">${renderTaskList(dateKey, 'small')}</div>
+                </div>`;
+        }
 
-    // Refresh icons and force textareas to wrap correctly
+        // RENDER EVERYTHING
+        container.innerHTML = `
+            <div class="weekly-planner-grid">
+                <div class="weekly-tasks-stack">
+                    ${daysHtml}
+                </div>
+                <div class="mini-calendar-sidebar">
+                    ${calendarSidebarHtml}
+                </div>
+            </div>`;
+    } // This bracket safely closes the "else" logic
+
+    // Refresh everything
     lucide.createIcons();
-    document.querySelectorAll('.task-row textarea').forEach(el => {
-        autoExpand(el);
-    });
+    document.querySelectorAll('.task-row textarea').forEach(el => autoExpand(el));
 }
 
 function clearDayTasks(dateKey) {
