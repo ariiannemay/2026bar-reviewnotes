@@ -870,11 +870,9 @@ const searchInput = document.getElementById('syllabus-search');
             const syllabus = SUBJECTS[sub];
             if (!container || !syllabus) return;
 
-            // CLEANUP: This regex strips any remaining "(1%)" or "1%" from the button text
-// Scrubbing the button text to remove any (0%) or 0% patterns
-        const subjectTitle = activeBtn.innerText.replace(/\s*\(\d+%\)\s*/g, "").replace(/\s*\d+%\s*/g, "").trim();
-        const activeColor = getActiveThemeColor(sub);
-        
+        const subjectTitle = activeBtn.innerText.replace(/\s*\(\d+%\)\s*/g, "").replace(/\s*\d+%\s*$/g, "").trim();
+        const activeColor = getActiveThemeColor(sub);        
+
         // Map specific icons based on subject name
         const iconMap = { poli: 'landmark', lab: 'handshake', civ: 'building-2', tax: 'banknote', crim: 'shield', rem: 'gavel' };
         const icon = iconMap[sub] || 'book';
@@ -1029,9 +1027,17 @@ function updateProgress() {
         const percent = Math.round((subDone / subCount) * 100) || 0;
 const btn = document.getElementById('sub-btn-' + sub);
 if (btn) {
-    // This regex removes any existing "(0%)" or " (0%)" pattern from the name
-    const rawName = btn.getAttribute('data-name') || btn.innerText.split('(')[0].trim();
-    const cleanName = rawName.replace(/\s*\(\d+%\)\s*/g, "").trim();
+    // 1. Define the clean names here so they never pull from the "polluted" UI
+    const subjectNames = {
+        poli: 'Political Law',
+        lab: 'Labor Law',
+        civ: 'Civil Law',
+        tax: 'Commercial Law',
+        crim: 'Criminal Law',
+        rem: 'Remedial Law'
+    };
+    
+    const cleanName = subjectNames[sub]; // Use the hardcoded clean name
     
     btn.setAttribute('data-name', cleanName);
     btn.innerHTML = `
