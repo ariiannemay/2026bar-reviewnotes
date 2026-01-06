@@ -1643,8 +1643,18 @@ function toggleLinkModal(show) {
 
 function exportSubjectNotes(sub) {
     const syllabus = SUBJECTS[sub];
-    const btn = document.getElementById('sub-btn-' + sub);
-    const subjectName = btn ? btn.innerText.split('(')[0].trim() : sub.toUpperCase();
+    
+    // Hardcoded map to bypass the "polluted" button text
+    const subjectNames = {
+        poli: 'Political Law',
+        lab: 'Labor Law',
+        civ: 'Civil Law',
+        tax: 'Commercial Law',
+        crim: 'Criminal Law',
+        rem: 'Remedial Law'
+    };
+    
+    const subjectName = subjectNames[sub] || sub.toUpperCase();
     const themeColor = getActiveThemeColor(sub);
     
     const printWindow = window.open('', '_blank');
@@ -1700,32 +1710,6 @@ function exportSubjectNotes(sub) {
             const isEmpty = rawNote.trim() === "";
 
             // LOGIC: If empty, show a blank space with a min-height for handwriting
-            printTemplate += `
-                <div style="
-                    display: block;
-                    width: auto;
-                    margin-left: ${indent + 20}px; 
-                    margin-top: 5px;
-                    margin-bottom: 15px;
-                    padding-left: 15px; 
-                    border-left: 2px solid #e5e7eb; 
-                    font-family: 'Inter', sans-serif;
-                    min-height: ${isEmpty ? '40px' : 'auto'};
-                ">
-                    <div style="
-                        white-space: pre-wrap; 
-                        font-size: 13px; 
-                        line-height: 1.6; 
-                        color: #1f2937; 
-                        word-wrap: break-word;
-                        overflow-wrap: break-word;
-                    ">
-                        ${isEmpty ? '' : escapeHtml(rawNote)}
-                    </div>
-                </div>`;
-        }
-    });
-
     printTemplate += `
             <div style="margin-top: 60px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
                 <div style="font-family: 'Bebas Neue', cursive; font-size: 16px; color: #9ca3af; letter-spacing: 1px;">
@@ -1737,12 +1721,18 @@ function exportSubjectNotes(sub) {
             </div>
         </div>`;
 
-    printWindow.document.write(printTemplate);
-    printWindow.document.close();
-    
-    setTimeout(() => { printWindow.print(); }, 800);
-}
+const printWindow = window.open('', '_blank');
+   printWindow.document.write(`<title>${subjectName} Review Notes</title>`);
+   printWindow.document.write(printTemplate);
+   printWindow.document.close();
+       setTimeout(() => { 
+        printWindow.print(); 
+    }, 800);
 
+        }
+    });
+
+}
 let searchTimeout;
 function handleSyllabusSearch(query) {
     clearTimeout(searchTimeout);
