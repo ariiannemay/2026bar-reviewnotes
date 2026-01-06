@@ -1,0 +1,33 @@
+{
+  "nachura_poli": {
+    "name": "Nachura Political Law",
+    "icon": "landmark",
+    "color": "#5D4037",
+    "collapsed": false,
+    "topics": [
+      {
+        "id": 1,
+        "title": "PART 1: CONSTITUTIONAL LAW",
+        "isTrackable": false,
+        "done": false,
+        "subtopics": [
+          { "id": 11, "title": "The 1987 Constitution", "isTrackable": true, "done": false, "subtopics": [] },
+          { "id": 12, "title": "The Concept of the State", "isTrackable": true, "done": false, "subtopics": [] },
+          { "id": 13, "title": "Principles and State Policies", "isTrackable": true, "done": false, "subtopics": [] }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "PART 2: THE STRUCTURE OF GOVERNMENT",
+        "isTrackable": false,
+        "done": false,
+        "subtopics": [
+          { "id": 21, "title": "Legislative Department", "isTrackable": true, "done": false, "subtopics": [] },
+          { "id": 22, "title": "Executive Department", "isTrackable": true, "done": false, "subtopics": [] },
+          { "id": 23, "title": "Judicial Department", "isTrackable": true, "done": false, "subtopics": [] },
+          { "id": 24, "title": "Constitutional Commissions", "isTrackable": true, "done": false, "subtopics": [] }
+        ]
+      }
+    ]
+  }
+}
