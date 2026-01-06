@@ -890,7 +890,7 @@ function switchSubject(sub) {
 
 // Premium Subject Header themed after the Materials Tracker
 const isTax = sub === 'tax'; // Commercial Law check
-const textColor = isTax ? '#000000' : '#FFFFFF'; 
+const textColor = isTax ? '#000000' : '#FFFFFF'; // Updated to your requested #000000
 const mutedColor = isTax ? 'rgba(51, 0, 102, 0.6)' : 'rgba(255, 255, 255, 0.6)';
 const btnBg = isTax ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.2)';
 
@@ -907,7 +907,7 @@ container.innerHTML = `
                             ${subjectTitle}
                         </h3>
                         <p class="text-[10px] font-bold italic tracking-widest uppercase" style="color: ${mutedColor}">
-                            Official Syllabus Review Notes • #AweSAMBar2026
+                            Official Syllabus Review Notes • Tracked by Content
                         </p>
                     </div>
                 </div>
@@ -937,7 +937,6 @@ container.innerHTML = `
             </div>
         </div>
     </div>
-
 
     <div id="notes-list-wrapper"></div>`;
         // Render the actual syllabus list below the header
