@@ -182,8 +182,6 @@
         min-height: 600px;
     }
 
-
-/* START EDITING HERE */
 .task-input-small {
     font-size: 9px !important; 
     font-weight: 600;
@@ -201,8 +199,6 @@
     font-weight: 700; 
     color: var(--color-primary-dark); 
 }
-/* END EDITING HERE */
-
 
 .mini-calendar-sidebar { border-left: 1px dashed #e5e7eb; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
     .weekly-calendar-footer { display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; }
@@ -448,7 +444,6 @@ align-items: center; /* Centers trash icon with text */
     opacity: 1;
 }
 
-/* START EDITING HERE */
 #date-jumper::-webkit-calendar-picker-indicator {
     cursor: pointer;
 }
@@ -456,14 +451,12 @@ align-items: center; /* Centers trash icon with text */
 /* Optional: Make the Today/Jump group look like a single unit */
 .rounded-l-full { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .rounded-r-full { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-/* END EDITING HERE */
 
 #master-progress-fill {
     height: 100%;
     transition: width 0.5s ease, background-color 0.5s ease; /* Added background-color transition */
 }
 
-/* START EDITING HERE */
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -577,21 +570,21 @@ align-items: center; /* Centers trash icon with text */
         </header>
 
 <nav class="flex bg-white rounded-b-xl shadow-md border-x border-b border-gray-200 p-0.5 gap-1 mb-6">
-            <button onclick="switchTab('tab-notes')" class="tab-btn active flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-notes">
-                <i data-lucide="notebook" class="w-4 h-4"></i> <span>Review Notes</span>
-            </button>
-            <button onclick="switchTab('tab-materials')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-materials">
+            <button onclick="switchTab('tab-materials')" class="tab-btn active flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-materials">
                 <i data-lucide="book-open-check" class="w-4 h-4"></i> <span>Materials Tracker</span>
             </button>
             <button onclick="switchTab('tab-todo')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-todo">
                 <i data-lucide="list-checks" class="w-4 h-4"></i> <span>To-Do List</span>
+            </button>
+            <button onclick="switchTab('tab-notes')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-notes">
+                <i data-lucide="notebook" class="w-4 h-4"></i> <span>Review Notes</span>
             </button>
             <button onclick="switchTab('tab-links')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-links">
                 <i data-lucide="external-link" class="w-4 h-4"></i> <span>Links</span>
             </button>
         </nav>
 
-        <div id="tab-notes" class="tab-content active">
+        <div id="tab-notes" class="tab-content">
             <div class="bg-white p-4 rounded-xl shadow border border-gray-200">
 
 
@@ -789,18 +782,31 @@ const SUBJECTS = {
 };
 
 function switchTab(tabId) {
+    // 1. Remove active state from all content and buttons
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
     
-    if(tabId === 'tab-todo') renderTodoView();
-    if(tabId === 'tab-links') renderLinks();
-    if(tabId === 'tab-materials') renderMaterials();
+    // 2. Add active state to the selected tab and its corresponding nav button
+    document.getElementById(tabId).classList.add('active');
+    const btnId = 'btn-' + tabId.split('-')[1];
+    const targetBtn = document.getElementById(btnId);
+    if (targetBtn) targetBtn.classList.add('active');
+    
+    // 3. Trigger specific renderers based on the tab
+    if (tabId === 'tab-todo') renderTodoView();
+    if (tabId === 'tab-links') renderLinks();
+    if (tabId === 'tab-materials') renderMaterials();
+    
+    // 4. Special handling for Review Notes tab
+    if (tabId === 'tab-notes') {
+        const container = document.getElementById('subject-notes-container');
+        // Only trigger a subject switch if the container is currently empty
+        if (!container.innerHTML.trim() || container.innerHTML.includes('loader-2')) {
+            switchSubject('rem'); 
+        }
+    }
 }
 
-
-/* START EDITING HERE */
 const loadedScripts = new Set();
 
 function lazyLoadSubject(sub, callback) {
@@ -878,36 +884,51 @@ function switchSubject(sub) {
         });
         const percent = total === 0 ? 0 : Math.round((done / total) * 100);
 
+// Premium Subject Header themed after the Materials Tracker
         container.innerHTML = `
-            <div class="rounded-xl overflow-hidden mb-6 shadow-sm border border-gray-100">
-                <div class="p-4 flex flex-col gap-3" style="background-color: ${activeColor}">
-                    <div class="flex justify-between items-center text-white">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-black/10 shadow-inner">
-                                <i data-lucide="${icon}" class="w-5 h-5"></i>
+            <div class="rounded-xl overflow-hidden mb-6 shadow-md border border-gray-100 transition-all duration-500">
+                <div class="p-5 flex flex-col gap-4" style="background-color: ${activeColor}">
+                    <div class="flex justify-between items-center text-[#330066]">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-black/10 shadow-inner">
+                                <i data-lucide="${icon}" class="w-6 h-6 text-[#330066]"></i>
                             </div>
                             <div>
-                                <h3 class="font-black uppercase text-sm tracking-widest leading-none">${subjectTitle} (${percent}%)</h3>
-                                <p class="text-[9px] font-bold opacity-60 italic mt-1 uppercase">Official Bar Syllabus Review Notes</p>
+                                <h3 class="font-black uppercase text-lg tracking-widest leading-tight text-[#330066]">
+                                    ${subjectTitle}
+                                </h3>
+                                <p class="text-[10px] font-bold text-[#330066]/60 italic tracking-widest uppercase">
+                                    Official Syllabus Review Notes • Tracked by Content
+                                </p>
                             </div>
                         </div>
-                        <button onclick="exportSubjectNotes('${sub}')" class="text-[10px] font-black bg-white/20 hover:bg-white/40 px-3 py-1.5 rounded-lg border border-white/30 transition-all uppercase">
-                            Export PDF
+                        <button onclick="exportSubjectNotes('${sub}')" 
+                            class="text-[10px] font-black bg-white/40 hover:bg-white/60 text-[#330066] border border-[#330066]/20 px-4 py-2 rounded-xl transition-all shadow-sm">
+                            EXPORT PDF
                         </button>
                     </div>
                     
-                    <div class="flex flex-wrap items-center gap-4 px-1 text-white">
-                        <div class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5 opacity-80"></i><span class="text-[10px] font-black uppercase tracking-tighter">FINISHED: ${done}</span></div>
-                        <div class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 opacity-80"></i><span class="text-[10px] font-black uppercase tracking-tighter">REMAINING: ${total - done}</span></div>
-                        <div class="flex-grow flex items-center gap-3">
-                            <div class="flex-grow h-2 bg-black/20 rounded-full overflow-hidden border border-black/5">
-                                <div class="h-full bg-white transition-all duration-700" style="width: ${percent}%"></div>
+                    <div class="flex flex-wrap items-center gap-6 px-1 text-[#330066]">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4 opacity-80"></i>
+                            <span class="text-[10px] font-black uppercase tracking-tighter">FINISHED: ${done} TOPICS</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-4 h-4 opacity-80"></i>
+                            <span class="text-[10px] font-black uppercase tracking-tighter">REMAINING: ${total - done}</span>
+                        </div>
+                        <div class="flex-grow flex items-center gap-4">
+                            <span class="text-[10px] font-black uppercase tracking-tighter">PROGRESS:</span>
+                            <div class="flex-grow h-2.5 bg-black/10 rounded-full overflow-hidden border border-black/5 shadow-inner">
+                                <div class="h-full bg-white transition-all duration-700 ease-out" style="width: ${percent}%"></div>
                             </div>
+                            <span class="text-[10px] font-black">${percent}%</span>
                         </div>
                     </div>
                 </div>
             </div>
             <div id="notes-list-wrapper"></div>`;
+
 
         // Render the actual syllabus list below the header
         const listWrapper = document.getElementById('notes-list-wrapper');
@@ -995,21 +1016,23 @@ function updateProgress() {
         });
 
         const percent = Math.round((subDone / subCount) * 100) || 0;
-        const btn = document.getElementById('sub-btn-' + sub);
-        if (btn) {
-            const subName = btn.getAttribute('data-name') || btn.innerText.split('(')[0].trim();
-            btn.setAttribute('data-name', subName);
-            // Replace simple text with a themed mini-dashboard for the button
-            btn.innerHTML = `
-                <div class="flex flex-col items-center gap-1">
-                    <span class="font-black text-[10px] tracking-tighter">${subName}</span>
-                    <div class="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
-                        <div class="h-full" style="width: ${percent}%; background-color: ${getActiveThemeColor(sub)}"></div>
-                    </div>
-                    <span class="text-[8px] font-bold opacity-60">${percent}%</span>
-                </div>
-            `;
-        }
+const btn = document.getElementById('sub-btn-' + sub);
+if (btn) {
+    // This regex removes any existing "(0%)" or " (0%)" pattern from the name
+    const rawName = btn.getAttribute('data-name') || btn.innerText.split('(')[0].trim();
+    const cleanName = rawName.replace(/\s*\(\d+%\)\s*/g, "").trim();
+    
+    btn.setAttribute('data-name', cleanName);
+    btn.innerHTML = `
+        <div class="flex flex-col items-center gap-1">
+            <span class="font-black text-[10px] tracking-tighter">${cleanName}</span>
+            <div class="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                <div class="h-full" style="width: ${percent}%; background-color: ${getActiveThemeColor(sub)}"></div>
+            </div>
+            <span class="text-[8px] font-bold opacity-60">${percent}%</span>
+        </div>
+    `;
+}
     });
 
     // Update Master Progress Bar UI
@@ -1083,7 +1106,6 @@ function navigateTodo(dir) {
             renderTodoView();
         }
 
-/* START EDITING HERE */
 window.jumpToSpecificDate = function(dateString) {
     // If the string contains a dash (YYYY-MM-DD), it's from the date picker
     // If it's a long string like "Tue Dec 30 2025", it's from the mini-calendar
@@ -1107,7 +1129,6 @@ window.jumpToSpecificDate = function(dateString) {
     
     renderTodoView();
 };
-/* END EDITING HERE */
 
 function handleJumpToDate(val) {
     if (!val) return;
@@ -1288,7 +1309,6 @@ function generateMiniCal(monthDate, selectedDate) {
     return html;
 }
 
-/* START EDITING HERE */
 function renderTaskList(dateKey, sizeClass) {
     let tasks = todoStorage[dateKey] || [];
     
@@ -1493,15 +1513,23 @@ function renderLinks() {
 }
  
 // --- INITIALIZE ---
-/* START EDITING HERE */
 window.onload = () => {
-    // This will now trigger the lazy loader for your default subject
-    switchSubject('rem'); 
+    // Set your desired starting tab here
+    const defaultTab = 'tab-materials'; 
+    
+    // 1. Initialize all data trackers first
     renderTodoView();
     renderLinks();
-renderMaterials();
+    renderMaterials();
+    
+    // 2. Pre-load the default subject logic in the background
+    lazyLoadSubject('rem', () => {
+        updateProgress(); // This ensures subject percentages show up on the buttons immediately
+    });
+
+    // 3. Switch to your preferred tab
+    switchTab(defaultTab);
 };
-/* END EDITING HERE */
 
 /* --- THEMED MODAL SYSTEM --- */
 function showThemedConfirm(title, message, onConfirm) {
@@ -1596,7 +1624,6 @@ function toggleLinkModal(show) {
     }
 }
 
-/* START EDITING HERE */
 function exportSubjectNotes(sub) {
     const syllabus = SUBJECTS[sub];
     const btn = document.getElementById('sub-btn-' + sub);
@@ -1698,7 +1725,6 @@ function exportSubjectNotes(sub) {
     
     setTimeout(() => { printWindow.print(); }, 800);
 }
-/* END EDITING HERE */
 
 let searchTimeout;
 function handleSyllabusSearch(query) {
