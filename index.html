@@ -889,51 +889,57 @@ function switchSubject(sub) {
         const percent = total === 0 ? 0 : Math.round((done / total) * 100);
 
 // Premium Subject Header themed after the Materials Tracker
-        container.innerHTML = `
-            <div class="rounded-xl overflow-hidden mb-6 shadow-md border border-gray-100 transition-all duration-500">
-                <div class="p-5 flex flex-col gap-4" style="background-color: ${activeColor}">
-                    <div class="flex justify-between items-center text-[#330066]">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-black/10 shadow-inner">
-                                <i data-lucide="${icon}" class="w-6 h-6 text-[#330066]"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-black uppercase text-lg tracking-widest leading-tight text-[#330066]">
-                                    ${subjectTitle}
-                                </h3>
-                                <p class="text-[10px] font-bold text-[#330066]/60 italic tracking-widest uppercase">
-                                    Official Syllabus Review Notes • Tracked by Content
-                                </p>
-                            </div>
-                        </div>
-                        <button onclick="exportSubjectNotes('${sub}')" 
-                            class="text-[10px] font-black bg-white/40 hover:bg-white/60 text-[#330066] border border-[#330066]/20 px-4 py-2 rounded-xl transition-all shadow-sm">
-                            EXPORT PDF
-                        </button>
+const isTax = sub === 'tax'; // Commercial Law check
+const textColor = isTax ? '#330066' : '#FFFFFF'; 
+const mutedColor = isTax ? 'rgba(51, 0, 102, 0.6)' : 'rgba(255, 255, 255, 0.6)';
+const btnBg = isTax ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.2)';
+
+container.innerHTML = `
+    <div class="rounded-xl overflow-hidden mb-6 shadow-md border border-gray-100 transition-all duration-500">
+        <div class="p-5 flex flex-col gap-4" style="background-color: ${activeColor}">
+            <div class="flex justify-between items-center" style="color: ${textColor}">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-black/10 shadow-inner">
+                        <i data-lucide="${icon}" class="w-6 h-6" style="color: ${textColor}"></i>
                     </div>
-                    
-                    <div class="flex flex-wrap items-center gap-6 px-1 text-[#330066]">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="check-circle" class="w-4 h-4 opacity-80"></i>
-                            <span class="text-[10px] font-black uppercase tracking-tighter">FINISHED: ${done} TOPICS</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="book-open" class="w-4 h-4 opacity-80"></i>
-                            <span class="text-[10px] font-black uppercase tracking-tighter">REMAINING: ${total - done}</span>
-                        </div>
-                        <div class="flex-grow flex items-center gap-4">
-                            <span class="text-[10px] font-black uppercase tracking-tighter">PROGRESS:</span>
-                            <div class="flex-grow h-2.5 bg-black/10 rounded-full overflow-hidden border border-black/5 shadow-inner">
-                                <div class="h-full bg-white transition-all duration-700 ease-out" style="width: ${percent}%"></div>
-                            </div>
-                            <span class="text-[10px] font-black">${percent}%</span>
-                        </div>
+                    <div>
+                        <h3 class="font-black uppercase text-lg tracking-widest leading-tight">
+                            ${subjectTitle}
+                        </h3>
+                        <p class="text-[10px] font-bold italic tracking-widest uppercase" style="color: ${mutedColor}">
+                            Official Syllabus Review Notes • Tracked by Content
+                        </p>
                     </div>
                 </div>
+                <button onclick="exportSubjectNotes('${sub}')" 
+                    class="text-[10px] font-black border px-4 py-2 rounded-xl transition-all shadow-sm"
+                    style="background-color: ${btnBg}; color: ${textColor}; border-color: ${mutedColor}">
+                    EXPORT PDF
+                </button>
             </div>
-            <div id="notes-list-wrapper"></div>`;
+            
+            <div class="flex flex-wrap items-center gap-6 px-1" style="color: ${textColor}">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4" style="opacity: 0.8"></i>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">FINISHED: ${done} TOPICS</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4" style="opacity: 0.8"></i>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">REMAINING: ${total - done}</span>
+                </div>
+                <div class="flex-grow flex items-center gap-4">
+                    <span class="text-[10px] font-black uppercase tracking-tighter">PROGRESS:</span>
+                    <div class="flex-grow h-2.5 bg-black/10 rounded-full overflow-hidden border border-black/5 shadow-inner">
+                        <div class="h-full bg-white transition-all duration-700 ease-out" style="width: ${percent}%"></div>
+                    </div>
+                    <span class="text-[10px] font-black">${percent}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
+    <div id="notes-list-wrapper"></div>`;
         // Render the actual syllabus list below the header
         const listWrapper = document.getElementById('notes-list-wrapper');
         syllabus.forEach((item, index) => {
