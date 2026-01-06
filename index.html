@@ -859,18 +859,20 @@ function lazyLoadSubject(sub, callback) {
 }
 
 function switchSubject(sub) {
-    const searchInput = document.getElementById('syllabus-search');
-    if (searchInput) searchInput.value = '';
-    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-    const activeBtn = document.getElementById('sub-btn-' + sub);
-    if (activeBtn) activeBtn.classList.add('active');
+const searchInput = document.getElementById('syllabus-search');
+        if (searchInput) searchInput.value = '';
+        document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById('sub-btn-' + sub);
+        if (activeBtn) activeBtn.classList.add('active');
 
-    lazyLoadSubject(sub, () => {
-        const container = document.getElementById('subject-notes-container');
-        const syllabus = SUBJECTS[sub];
-        if (!container || !syllabus) return;
+        lazyLoadSubject(sub, () => {
+            const container = document.getElementById('subject-notes-container');
+            const syllabus = SUBJECTS[sub];
+            if (!container || !syllabus) return;
 
-        const subjectTitle = activeBtn.innerText.split('(')[0].trim();
+            // CLEANUP: This regex strips any remaining "(1%)" or "1%" from the button text
+// Scrubbing the button text to remove any (0%) or 0% patterns
+        const subjectTitle = activeBtn.innerText.replace(/\s*\(\d+%\)\s*/g, "").replace(/\s*\d+%\s*/g, "").trim();
         const activeColor = getActiveThemeColor(sub);
         
         // Map specific icons based on subject name
