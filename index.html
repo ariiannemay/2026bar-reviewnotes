@@ -1644,7 +1644,6 @@ function toggleLinkModal(show) {
 function exportSubjectNotes(sub) {
     const syllabus = SUBJECTS[sub];
     
-    // Hardcoded map to bypass the "polluted" button text
     const subjectNames = {
         poli: 'Political Law',
         lab: 'Labor Law',
@@ -1656,18 +1655,17 @@ function exportSubjectNotes(sub) {
     
     const subjectName = subjectNames[sub] || sub.toUpperCase();
     const themeColor = getActiveThemeColor(sub);
-    
-    const printWindow = window.open('', '_blank');
-    
+        
     function escapeHtml(text) {
         return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // REDUCED PADDING: Changed from 40px to 20px for wider content
+    // 1. OPEN THE WINDOW ONCE (Above the loop)
+    const printWindow = window.open('', '_blank');
+
     let printTemplate = `
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
         <div style="font-family: 'Inter', sans-serif; padding: 20px; color: #1a1a1a;">
-            
             <div style="border-bottom: 5px solid ${themeColor}; margin-bottom: 20px; padding-bottom: 10px;">
                 <div style="font-family: 'Bebas Neue', cursive; font-size: 48px; color: ${themeColor}; letter-spacing: 2px; line-height: 1;">
                     #AweSAMBar2026 • ${subjectName}
@@ -1680,8 +1678,6 @@ function exportSubjectNotes(sub) {
     syllabus.forEach((item, i) => {
         const isNote = !(i + 1 < syllabus.length && syllabus[i+1].depth > item.depth);
         const indent = (item.depth - 1) * 20;
-        
-        // TIGHTER MARGINS: Reduced top margin from 15px to 8px
         let depthStyle = `margin-left: ${indent}px; margin-top: 8px; font-family: 'Inter', sans-serif;`;
         
         if (item.depth === 1) {
@@ -1709,7 +1705,16 @@ function exportSubjectNotes(sub) {
             let rawNote = localStorage.getItem(key) || "";
             const isEmpty = rawNote.trim() === "";
 
-            // LOGIC: If empty, show a blank space with a min-height for handwriting
+            printTemplate += `
+                <div style="display: block; width: auto; margin-left: ${indent + 20}px; margin-top: 5px; margin-bottom: 15px; padding-left: 15px; border-left: 2px solid #e5e7eb; font-family: 'Inter', sans-serif; min-height: ${isEmpty ? '40px' : 'auto'};">
+                    <div style="white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: #1f2937; word-wrap: break-word; overflow-wrap: break-word;">
+                        ${isEmpty ? '' : escapeHtml(rawNote)}
+                    </div>
+                </div>`;
+        }
+    });
+
+    // 2. WRAP UP CONTENT (Below the loop)
     printTemplate += `
             <div style="margin-top: 60px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
                 <div style="font-family: 'Bebas Neue', cursive; font-size: 16px; color: #9ca3af; letter-spacing: 1px;">
@@ -1721,18 +1726,16 @@ function exportSubjectNotes(sub) {
             </div>
         </div>`;
 
-const printWindow = window.open('', '_blank');
-   printWindow.document.write(`<title>${subjectName} Review Notes</title>`);
-   printWindow.document.write(printTemplate);
-   printWindow.document.close();
-       setTimeout(() => { 
+    // 3. FINAL PRINT COMMANDS (Once only)
+    printWindow.document.write(`<title>${subjectName} Review Notes</title>`);
+    printWindow.document.write(printTemplate);
+    printWindow.document.close();
+    
+    setTimeout(() => { 
         printWindow.print(); 
     }, 800);
-
-        }
-    });
-
 }
+
 let searchTimeout;
 function handleSyllabusSearch(query) {
     clearTimeout(searchTimeout);
