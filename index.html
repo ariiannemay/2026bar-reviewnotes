@@ -503,6 +503,57 @@ align-items: center; /* Centers trash icon with text */
     #notes-list-wrapper details:not(.hidden) {
         animation: fadeIn 0.2s ease-out;
     }
+.material-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    height: fit-content;
+}
+.nested-topic {
+    margin-left: 1.5rem;
+    border-left: 2px dashed #f3e8ff;
+    padding-left: 0.75rem;
+}
+.trackable-item:hover {
+    background-color: #f9fafb;
+}
+
+/* Material Tracker Specifics */
+#materials-grid > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1; /* This forces any "last odd" item to span the full width */
+}
+
+@media (min-width: 768px) {
+    #materials-grid > div:last-child:nth-child(odd) {
+        grid-column: span 2; /* Stretches the 1st, 3rd, 5th, etc. if it's the last one */
+    }
+}
+
+.material-panel {
+    border-top: 4px solid var(--panel-color, #B266FF);
+    transition: transform 0.2s;
+}
+.material-panel:hover {
+    transform: translateY(-2px);
+}
+.nested-topic {
+    margin-left: 1.25rem;
+    border-left: 1px dashed #e5e7eb;
+    padding-left: 0.75rem;
+}
+.subject-progress-container {
+    background: rgba(0, 0, 0, 0.05);
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.subject-progress-fill {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 </style>
 </head>
 
@@ -525,16 +576,19 @@ align-items: center; /* Centers trash icon with text */
             </div>
         </header>
 
-        <nav class="flex bg-white rounded-b-xl shadow-md border-x border-b border-gray-200 p-0.5 gap-1 mb-6">
+<nav class="flex bg-white rounded-b-xl shadow-md border-x border-b border-gray-200 p-0.5 gap-1 mb-6">
             <button onclick="switchTab('tab-notes')" class="tab-btn active flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-notes">
                 <i data-lucide="notebook" class="w-4 h-4"></i> <span>Review Notes</span>
+            </button>
+            <button onclick="switchTab('tab-materials')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-materials">
+                <i data-lucide="book-open-check" class="w-4 h-4"></i> <span>Materials Tracker</span>
             </button>
             <button onclick="switchTab('tab-todo')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-todo">
                 <i data-lucide="list-checks" class="w-4 h-4"></i> <span>To-Do List</span>
             </button>
-<button onclick="switchTab('tab-links')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-links">
-    <i data-lucide="external-link" class="w-4 h-4"></i> <span>Links</span>
-</button>
+            <button onclick="switchTab('tab-links')" class="tab-btn flex-1 py-1 px-4 rounded-md text-gray-500 font-bold uppercase flex items-center justify-center gap-2" id="btn-links">
+                <i data-lucide="external-link" class="w-4 h-4"></i> <span>Links</span>
+            </button>
         </nav>
 
         <div id="tab-notes" class="tab-content active">
@@ -572,6 +626,70 @@ align-items: center; /* Centers trash icon with text */
                 <div id="subject-notes-container" class="space-y-4"></div>
             </div>
         </div>
+
+<div id="tab-materials" class="tab-content">
+    <div class="header-bg p-4 rounded-t-xl flex justify-between items-center">
+        <div class="flex flex-col">
+            <h2 class="header-font text-2xl text-white tracking-widest uppercase leading-none">Materials Tracker</h2>
+            <p class="text-[10px] font-bold text-white/60 italic tracking-widest mt-1 uppercase">
+                Use this to track progress for review books, video lectures, or handouts
+            </p>
+        </div>
+        <button onclick="openMaterialModal()" class="bg-[#B266FF] text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase hover:scale-105 transition-all">
+            + Track a Review Material
+        </button>
+    </div>
+    
+    <div id="materials-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 p-4"></div>
+</div>
+
+<div id="topic-entry-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[260] p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden modal-animate-in">
+        <div class="modal-header-bg p-4 text-white font-black header-font text-xl tracking-widest uppercase">
+            Add Topic
+        </div>
+        <div class="p-6 space-y-4">
+            <input type="text" id="topic-title" placeholder="Topic Title..." class="w-full p-3 border-2 border-gray-100 rounded-xl outline-none focus:border-[#B266FF]">
+            <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer">
+                <input type="checkbox" id="topic-trackable" class="w-5 h-5 rounded border-gray-300 text-[#330066]">
+                <span class="text-xs font-bold text-gray-600 uppercase">Make Trackable (Add Checkbox)</span>
+            </label>
+        </div>
+        <div class="p-4 bg-gray-50 flex gap-2">
+            <button onclick="closeTopicModal()" class="flex-1 py-3 text-gray-400 font-black uppercase text-[10px]">Cancel</button>
+            <button id="save-topic-btn" class="flex-1 py-3 bg-[#330066] text-white font-black uppercase text-[10px] rounded-xl shadow-lg">Save Topic</button>
+        </div>
+    </div>
+</div>
+
+<div id="material-entry-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[250] p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden modal-animate-in">
+        <div class="modal-header-bg p-4 text-white font-black header-font text-2xl tracking-widest uppercase flex justify-between">
+            <span id="mat-modal-title">New Review Material</span>
+            <button onclick="closeMaterialModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="p-8 space-y-6">
+            <input type="text" id="mat-name" placeholder="Material Name (e.g. Leonen Civ Notes)" class="w-full p-3 border-2 border-gray-100 rounded-xl outline-none focus:border-[#B266FF]">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-400 mb-3">Select Icon</label>
+                    <div id="mat-icon-picker" class="grid grid-cols-5 gap-1 p-2 border border-gray-100 rounded-xl bg-gray-50/30"></div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-400 mb-3">Select Color</label>
+                    <div id="mat-color-picker" class="grid grid-cols-5 gap-3 p-1"></div>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 bg-gray-50 flex gap-3">
+            <button onclick="closeMaterialModal()" class="flex-1 py-3 text-gray-400 font-black uppercase text-[10px] tracking-widest hover:text-gray-600 transition-colors">Cancel</button>
+            <button onclick="saveMaterialEntry()" class="flex-1 py-3 bg-[#330066] text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg hover:bg-[#B266FF] transition-all">Save Material</button>
+        </div>
+    </div>
+</div>
+
+
 
         <div id="tab-todo" class="tab-content">
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col min-h-[700px]">
@@ -627,24 +745,32 @@ align-items: center; /* Centers trash icon with text */
     </div>
 </div>
 
-<div id="link-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[100] p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div class="header-bg p-4 text-white font-black header-font text-xl">ADD RESOURCE LINK</div>
-        <div class="p-6 space-y-4">
-            <input type="text" id="link-title" placeholder="Link Title (e.g. Civ Law Drive)" class="w-full p-2 border-2 border-gray-100 rounded-lg outline-none focus:border-[#B266FF]">
-            <input type="text" id="link-url" placeholder="URL (https://...)" class="w-full p-2 border-2 border-gray-100 rounded-lg outline-none focus:border-[#B266FF]">
-            
-            <label class="block text-[10px] font-black uppercase text-gray-400">Select Icon</label>
-            <div id="icon-picker" class="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-2 border rounded-lg">
-                </div>
-
-            <label class="block text-[10px] font-black uppercase text-gray-400">Select Color</label>
-            <div id="color-picker" class="flex gap-2">
-                </div>
+<div id="link-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[250] p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden modal-animate-in">
+        <div class="modal-header-bg p-4 text-white font-black header-font text-2xl tracking-widest uppercase flex justify-between">
+            <span id="link-modal-title">Add Resource Link</span>
+            <button onclick="toggleLinkModal(false)"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
-        <div class="p-4 bg-gray-50 flex gap-2">
-            <button onclick="toggleLinkModal(false)" class="flex-1 py-2 text-gray-500 font-bold uppercase text-xs">Cancel</button>
-            <button onclick="saveLink()" class="flex-1 py-2 bg-[#330066] text-white font-bold uppercase text-xs rounded-lg">Save Link</button>
+        <div class="p-8 space-y-6">
+            <div class="space-y-4">
+                <input type="text" id="link-title" placeholder="Link Title (e.g. Civ Law Drive)" class="w-full p-3 border-2 border-gray-100 rounded-xl outline-none focus:border-[#B266FF]">
+                <input type="text" id="link-url" placeholder="URL (https://...)" class="w-full p-3 border-2 border-gray-100 rounded-xl outline-none focus:border-[#B266FF]">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Select Icon</label>
+                    <div id="icon-picker" class="grid grid-cols-5 gap-1 p-2 border border-gray-100 rounded-xl bg-gray-50/30"></div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Select Color</label>
+<div id="color-picker" class="grid grid-cols-5 gap-3 p-1"></div>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 bg-gray-50 flex gap-3">
+            <button onclick="toggleLinkModal(false)" class="flex-1 py-3 text-gray-400 font-black uppercase text-[10px] tracking-widest">Cancel</button>
+            <button onclick="saveLink()" class="flex-1 py-3 bg-[#330066] text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg">Save Link</button>
         </div>
     </div>
 </div>
@@ -662,13 +788,17 @@ const SUBJECTS = {
     rem: typeof REM_ETHICS_SYLLABUS !== 'undefined' ? REM_ETHICS_SYLLABUS : []
 };
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
-            if(tabId === 'tab-todo') renderTodoView();
-        }
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
+    
+    if(tabId === 'tab-todo') renderTodoView();
+    if(tabId === 'tab-links') renderLinks();
+    if(tabId === 'tab-materials') renderMaterials();
+}
+
 
 /* START EDITING HERE */
 const loadedScripts = new Set();
@@ -719,7 +849,7 @@ function lazyLoadSubject(sub, callback) {
 }
 
 function switchSubject(sub) {
-const searchInput = document.getElementById('syllabus-search');
+    const searchInput = document.getElementById('syllabus-search');
     if (searchInput) searchInput.value = '';
     document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById('sub-btn-' + sub);
@@ -732,36 +862,67 @@ const searchInput = document.getElementById('syllabus-search');
 
         const subjectTitle = activeBtn.innerText.split('(')[0].trim();
         const activeColor = getActiveThemeColor(sub);
+        
+        // Map specific icons based on subject name
+        const iconMap = { poli: 'landmark', lab: 'handshake', civ: 'building-2', tax: 'banknote', crim: 'shield', rem: 'gavel' };
+        const icon = iconMap[sub] || 'book';
 
-        // Render only Top Level (Depth 1) to keep it fast
-        let html = `
-            <div class="flex justify-between items-center mb-6 px-2">
-                <h3 class="header-font text-2xl tracking-widest text-[#330066] uppercase">${subjectTitle}</h3>
-                <button onclick="exportSubjectNotes('${sub}')" class="export-btn">
-                    <i data-lucide="file-text" class="w-3 h-3"></i> Export PDF
-                </button>
+        // Calculate Stats for the Header
+        let total = 0, done = 0;
+        syllabus.forEach((item, index) => {
+            if (item.depth === 2) {
+                total++;
+                const parent = syllabus.slice(0, index).reverse().find(i => i.depth === 1);
+                if (localStorage.getItem(`note_${sub}_${parent ? parent.topic : ''}_${item.topic}`)?.trim()) done++;
+            }
+        });
+        const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+
+        container.innerHTML = `
+            <div class="rounded-xl overflow-hidden mb-6 shadow-sm border border-gray-100">
+                <div class="p-4 flex flex-col gap-3" style="background-color: ${activeColor}">
+                    <div class="flex justify-between items-center text-white">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-black/10 shadow-inner">
+                                <i data-lucide="${icon}" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-black uppercase text-sm tracking-widest leading-none">${subjectTitle} (${percent}%)</h3>
+                                <p class="text-[9px] font-bold opacity-60 italic mt-1 uppercase">Official Bar Syllabus Review Notes</p>
+                            </div>
+                        </div>
+                        <button onclick="exportSubjectNotes('${sub}')" class="text-[10px] font-black bg-white/20 hover:bg-white/40 px-3 py-1.5 rounded-lg border border-white/30 transition-all uppercase">
+                            Export PDF
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-4 px-1 text-white">
+                        <div class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5 opacity-80"></i><span class="text-[10px] font-black uppercase tracking-tighter">FINISHED: ${done}</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 opacity-80"></i><span class="text-[10px] font-black uppercase tracking-tighter">REMAINING: ${total - done}</span></div>
+                        <div class="flex-grow flex items-center gap-3">
+                            <div class="flex-grow h-2 bg-black/20 rounded-full overflow-hidden border border-black/5">
+                                <div class="h-full bg-white transition-all duration-700" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="notes-list-wrapper">`;
+            <div id="notes-list-wrapper"></div>`;
 
+        // Render the actual syllabus list below the header
+        const listWrapper = document.getElementById('notes-list-wrapper');
         syllabus.forEach((item, index) => {
             if (item.depth === 1) {
-                html += `
-                    <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm" 
-                             onclick="renderSubTopics(this, '${sub}', ${index})">
-                        <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" 
-                                 style="border-color: ${activeColor}">
+                listWrapper.innerHTML += `
+                    <details class="group bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 shadow-sm" onclick="renderSubTopics(this, '${sub}', ${index})">
+                        <summary class="p-4 font-black text-sm text-[#330066] cursor-pointer hover:bg-gray-50 flex justify-between items-center select-none border-l-4" style="border-color: ${activeColor}">
                             <span class="uppercase tracking-wider">${item.topic}</span>
                             <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180 opacity-40"></i>
                         </summary>
-                        <div class="p-2 bg-gray-50/30 sub-content-area">
-                            <div class="flex justify-center py-4"><i data-lucide="loader-2" class="animate-spin text-purple-300"></i></div>
-                        </div>
+                        <div class="p-2 bg-gray-50/30 sub-content-area"><div class="flex justify-center py-4"><i data-lucide="loader-2" class="animate-spin text-purple-300"></i></div></div>
                     </details>`;
             }
         });
-
-        html += `</div>`;
-        container.innerHTML = html;
         lucide.createIcons();
         updateProgress();
     });
@@ -814,35 +975,40 @@ function updateProgress() {
 
     Object.keys(SUBJECTS).forEach(sub => {
         const syllabus = SUBJECTS[sub];
+        if (!syllabus.length) return;
+        
         let subCount = 0;
         let subDone = 0;
 
-        // Process only Depth 2 items as the actual "tasks"
         syllabus.forEach((item, index) => {
             if (item.depth === 2) {
                 totalSubtopics++;
                 subCount++;
-                
-                // Find nearest preceding Depth 1 parent to match the save key format
                 const parent = syllabus.slice(0, index).reverse().find(i => i.depth === 1);
-                const parentTitle = parent ? parent.topic : '';
-                
-                // Match the key format used in saveNote
-                const saved = localStorage.getItem(`note_${sub}_${parentTitle}_${item.topic}`);
-                if (saved && saved.trim().length > 0) {
+                // Topic is DONE only if note exists and is not just whitespace
+                const savedContent = localStorage.getItem(`note_${sub}_${parent ? parent.topic : ''}_${item.topic}`);
+                if (savedContent && savedContent.trim().length > 0) {
                     completedSubtopics++;
                     subDone++;
                 }
             }
         });
 
-        // Update Button percentage text
         const percent = Math.round((subDone / subCount) * 100) || 0;
         const btn = document.getElementById('sub-btn-' + sub);
         if (btn) {
             const subName = btn.getAttribute('data-name') || btn.innerText.split('(')[0].trim();
             btn.setAttribute('data-name', subName);
-            btn.innerHTML = `${subName} <span class="ml-1 text-[9px] opacity-70">(${percent}%)</span>`;
+            // Replace simple text with a themed mini-dashboard for the button
+            btn.innerHTML = `
+                <div class="flex flex-col items-center gap-1">
+                    <span class="font-black text-[10px] tracking-tighter">${subName}</span>
+                    <div class="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                        <div class="h-full" style="width: ${percent}%; background-color: ${getActiveThemeColor(sub)}"></div>
+                    </div>
+                    <span class="text-[8px] font-bold opacity-60">${percent}%</span>
+                </div>
+            `;
         }
     });
 
@@ -907,10 +1073,7 @@ const activeBtn = document.getElementById(`todo-btn-${mode}`);
 }
 
 function navigateTodo(dir) {
-    // If we are in weekly mode, jump by 7 days (dir * 7)
-    // If we are in daily mode, jump by 1 day (dir * 1)
     const jumpAmount = (todoMode === 'weekly') ? 7 : 1;
-    
     todoOffset += (dir * jumpAmount);
     renderTodoView();
 }
@@ -1209,14 +1372,38 @@ function editTodo(dateKey, i, val) {
 
 // Data and Constants
 const studyIcons = [
+    // Your core Bar Subject icons
+    'gavel', 'shield', 'handshake', 'building-2', 'banknote', 'landmark', 
+    // Academic & Document icons
     'book', 'book-open', 'graduation-cap', 'pencil', 'library', 'file-text', 
-    'folder', 'link', 'archive', 'clipboard-list', 'globe', 'database', 
-    'brain', 'scroll', 'bookmark', 'search', 'scale', 'gavel', 'cpu', 'cloud'
+    'folder', 'clipboard-list', 'scroll', 'bookmark',    
+    // Tech & System icons
+    'link', 'archive', 'globe', 'database', 'brain', 'search', 'cpu', 'cloud', 'heart'
 ];
 
 const studyColors = [
-    '#00BCD4', '#0097A7', '#4CAF50', '#8BC34A', '#B266FF', '#673AB7', 
-    '#FF9800', '#F44336', '#E91E63', '#330066'
+    // ROW 1: Deep & Sophisticated (Dark Tones)
+    '#5D4037', // Brown
+    '#330066', // Deep Purple
+    '#1B5E20', // Forest Green
+    '#B71C1C', // Deep Red
+    '#0D47A1', // Royal Blue
+    '#E65100', // Deep Orange
+    '#880E4F', // Deep Pink
+    '#F57F17', // Golden Yellow
+    '#263238', // Gunmetal Gray
+    '#311B92', // Indigo
+// ROW 2: Deep & Muted
+    '#8D6E63', // Soft Clay
+    '#FBC02D', // Mustard Yellow
+    '#689F38', // Light Olive
+    '#EC407A', // Rose
+    '#EF5350', // Soft Red
+    '#42A5F5', // Sky Blue
+    '#AB47BC', // Amethyst
+    '#FFA726', // Amber
+    '#78909C', // Slate
+    '#26A69A'  // Seafoam
 ];
 
 let selectedIcon = 'link';
@@ -1230,23 +1417,23 @@ function toggleLinkModal(show) {
     if(show) setupPickers();
 }
 
+// Logic for Link Modal Pickers
 function setupPickers() {
     const iconContainer = document.getElementById('icon-picker');
     const colorContainer = document.getElementById('color-picker');
     
     iconContainer.innerHTML = studyIcons.map(icon => `
         <button onclick="selectedIcon='${icon}'; setupPickers()" 
-            class="p-2 border rounded hover:bg-gray-100 flex justify-center ${selectedIcon === icon ? 'border-[#B266FF] bg-purple-50' : 'border-gray-100'}">
-            <i data-lucide="${icon}" class="w-5 h-5 ${selectedIcon === icon ? 'text-[#330066]' : 'text-gray-600'}"></i>
+            class="p-1.5 border rounded-lg flex justify-center transition-all ${selectedIcon === icon ? 'border-[#B266FF] bg-purple-50 shadow-sm' : 'border-transparent hover:bg-white'}">
+            <i data-lucide="${icon}" class="w-3.5 h-3.5 ${selectedIcon === icon ? 'text-[#330066]' : 'text-gray-400'}"></i>
         </button>
     `).join('');
 
-    colorContainer.innerHTML = studyColors.map(color => `
-        <button onclick="selectedColor='${color}'; setupPickers()" 
-            class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${selectedColor === color ? 'border-[#330066] ring-2 ring-[#B266FF]' : 'border-white ring-1 ring-gray-200'}" 
-            style="background:${color}"></button>
-    `).join('');
-    
+colorContainer.innerHTML = studyColors.map(color => `
+    <button onclick="selectedColor='${color}'; setupPickers()" 
+        class="w-8 h-8 rounded-full border-2 transition-all hover:scale-110 active:scale-95 shadow-md ${selectedColor === color ? 'border-[#330066] ring-2 ring-[#B266FF] ring-offset-1' : 'border-white hover:border-gray-200'}" 
+        style="background:${color}"></button>
+`).join('');
     lucide.createIcons();
 }
 
@@ -1312,6 +1499,7 @@ window.onload = () => {
     switchSubject('rem'); 
     renderTodoView();
     renderLinks();
+renderMaterials();
 };
 /* END EDITING HERE */
 
@@ -1559,6 +1747,385 @@ function handleSyllabusSearch(query) {
             }
         });
     }, 300);
+}
+
+let materialsData = JSON.parse(localStorage.getItem('bar_materials')) || [];
+let currentMatEditId = null;
+let currentTopicParentId = null;
+let currentTopicMatId = null;
+let selectedMatIcon = 'book';
+let selectedMatColor = '#B266FF';
+
+// --- MATERIAL MODAL LOGIC ---
+function openMaterialModal(id = null) {
+    currentMatEditId = id;
+    const modal = document.getElementById('material-entry-modal');
+    const title = document.getElementById('mat-modal-title');
+    
+    if (id) {
+        const mat = materialsData.find(m => m.id === id);
+        document.getElementById('mat-name').value = mat.name;
+        selectedMatIcon = mat.icon || 'book';
+        selectedMatColor = mat.color || '#B266FF';
+        title.innerText = "Edit Material";
+    } else {
+        document.getElementById('mat-name').value = '';
+        selectedMatIcon = 'book';
+        selectedMatColor = '#B266FF';
+        title.innerText = "New Review Material";
+    }
+
+    setupMatPickers();
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    lucide.createIcons();
+}
+
+// Logic for Material Modal Pickers
+function setupMatPickers() {
+    const iconContainer = document.getElementById('mat-icon-picker');
+    const colorContainer = document.getElementById('mat-color-picker');
+    
+    iconContainer.innerHTML = studyIcons.map(icon => `
+        <button onclick="selectedMatIcon='${icon}'; setupMatPickers()" 
+            class="p-1.5 border rounded-lg flex justify-center transition-all ${selectedMatIcon === icon ? 'border-[#B266FF] bg-purple-50 shadow-sm' : 'border-transparent hover:bg-white'}">
+            <i data-lucide="${icon}" class="w-3.5 h-3.5 ${selectedMatIcon === icon ? 'text-[#330066]' : 'text-gray-400'}"></i>
+        </button>
+    `).join('');
+
+    colorContainer.innerHTML = studyColors.map(color => `
+        <button onclick="selectedMatColor='${color}'; setupMatPickers()" 
+            class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${selectedMatColor === color ? 'border-[#330066] ring-2 ring-[#B266FF]' : 'border-white shadow-sm'}" 
+            style="background:${color}"></button>
+    `).join('');
+    lucide.createIcons();
+}
+
+function saveMaterialEntry() {
+    const name = document.getElementById('mat-name').value;
+    if (!name) return;
+
+    if (currentMatEditId) {
+        const mat = materialsData.find(m => m.id === currentMatEditId);
+        mat.name = name;
+        mat.icon = selectedMatIcon;
+        mat.color = selectedMatColor;
+    } else {
+        materialsData.push({
+            id: Date.now(),
+            name: name,
+            icon: selectedMatIcon,
+            color: selectedMatColor,
+            topics: []
+        });
+    }
+    
+    closeMaterialModal();
+    saveMaterials();
+}
+
+function closeMaterialModal() {
+    document.getElementById('material-entry-modal').classList.add('hidden');
+    document.getElementById('material-entry-modal').classList.remove('flex');
+}
+
+// --- TOPIC MODAL LOGIC ---
+function addTopic(materialId, parentId = null) {
+    currentTopicMatId = materialId;
+    currentTopicParentId = parentId;
+    
+    document.getElementById('topic-title').value = '';
+    document.getElementById('topic-trackable').checked = true;
+    
+    const modal = document.getElementById('topic-entry-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    document.getElementById('save-topic-btn').onclick = saveTopicEntry;
+}
+
+function saveTopicEntry() {
+    const title = document.getElementById('topic-title').value;
+    const isTrackable = document.getElementById('topic-trackable').checked;
+    if (!title) return;
+
+    const newTopic = {
+        id: Date.now(),
+        title: title,
+        isTrackable: isTrackable,
+        done: false,
+        subtopics: []
+    };
+
+    const material = materialsData.find(m => m.id === currentTopicMatId);
+    if (!currentTopicParentId) {
+        material.topics.push(newTopic);
+    } else {
+        const findRecursive = (list) => {
+            for (let t of list) {
+                if (t.id === currentTopicParentId) { t.subtopics.push(newTopic); return true; }
+                if (t.subtopics && findRecursive(t.subtopics)) return true;
+            }
+        };
+        findRecursive(material.topics);
+    }
+    closeTopicModal();
+    saveMaterials();
+}
+
+function closeTopicModal() {
+    document.getElementById('topic-entry-modal').classList.add('hidden');
+    document.getElementById('topic-entry-modal').classList.remove('flex');
+}
+
+// --- RENDER & CORE LOGIC ---
+function renderMaterials() {
+    const container = document.getElementById('materials-grid');
+    if (!container) return;
+    
+container.innerHTML = materialsData.map(m => {
+        // Progress Calculation Logic
+        let totalTrackable = 0;
+        let doneTrackable = 0;
+
+        const countProgress = (list) => {
+            list.forEach(t => {
+                if (t.isTrackable) { 
+                    totalTrackable++; 
+                    if (t.done) doneTrackable++; 
+                }
+                if (t.subtopics && t.subtopics.length > 0) countProgress(t.subtopics);
+            });
+        };
+        countProgress(m.topics);
+
+        const toReadCount = totalTrackable - doneTrackable;
+        const percent = totalTrackable === 0 ? 0 : Math.round((doneTrackable / totalTrackable) * 100);
+
+        // Dynamic Progress Color Logic
+        let barColor = '#ef4444'; // Red (0-25%)
+        if (percent > 25) barColor = '#f97316'; // Orange
+        if (percent > 50) barColor = '#eab308'; // Yellow
+        if (percent > 75) barColor = '#22c55e'; // Green
+
+const isCollapsed = m.collapsed || false; // Check saved state
+
+return `
+        <div class="material-panel bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6" style="--panel-color: ${m.color}">
+            <div class="p-4 flex flex-col gap-3 text-white cursor-pointer" style="background-color: ${m.color}" onclick="toggleCollapse(${m.id}, event)">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/20 shadow-inner">
+                            <i data-lucide="${m.icon}" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black uppercase text-sm tracking-widest text-white">${m.name} (${percent}%)</h3>
+                            <p class="text-[9px] font-bold text-white/60 italic tracking-wide mt-0.5">Review Material Tracker • ${isCollapsed ? 'Press to Expand' : 'Press to Collapse'}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-1" onclick="event.stopPropagation()"> <div class="flex items-center bg-white/10 rounded-lg px-1 mr-1">
+                            <button onclick="moveMaterial(${m.id}, -1)" class="p-1 text-white/70 hover:text-white"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <button onclick="moveMaterial(${m.id}, 1)" class="p-1 text-white/70 hover:text-white"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        </div>
+                        <button onclick="addTopic(${m.id})" class="text-[10px] font-black bg-white/20 hover:bg-white/40 text-white border border-white/30 px-3 py-1.5 rounded-lg">+ TOPIC</button>
+                        <button onclick="openMaterialModal(${m.id})" class="p-2 text-white/70 hover:text-white"><i data-lucide="settings" class="w-4 h-4"></i></button>
+                        <button onclick="deleteMaterial(${m.id})" class="p-2 text-white/70 hover:text-red-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-4 px-1">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5 opacity-80"></i>
+                        <span class="text-[10px] font-black uppercase tracking-tighter">DONE: ${doneTrackable} TOPICS</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="book-open" class="w-3.5 h-3.5 opacity-80"></i>
+                        <span class="text-[10px] font-black uppercase tracking-tighter">TO READ: ${toReadCount} TOPICS</span>
+                    </div>
+                    <div class="flex-grow flex items-center gap-3">
+                        <span class="text-[10px] font-black uppercase tracking-tighter whitespace-nowrap">OVERALL PROGRESS:</span>
+                        <div class="flex-grow h-2 bg-white/20 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                            <div class="h-full transition-all duration-700 ease-out" style="width: ${percent}%; background-color: ${barColor}"></div>
+                        </div>
+                        <span class="text-[10px] font-black">${percent}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-1">
+                ${m.topics.length === 0 ? '<p class="text-[10px] text-center text-gray-400 italic py-6">No topics added yet. Click + TOPIC to start tracking.</p>' : renderTopicsRecursive(m.topics, m.id)}
+            </div>
+        </div>`;
+    }).join('');
+    lucide.createIcons();
+}
+
+function renderTopicsRecursive(topics, materialId) {
+    return topics.map((t, index) => { // Added index for reordering
+        const isHeader = !t.isTrackable;
+        const textStyle = isHeader 
+            ? 'text-[#330066] font-black uppercase tracking-tight' 
+            : (t.done ? 'line-through text-gray-400 font-medium' : 'text-gray-700 font-medium');
+
+        return `
+        <div class="topic-wrapper mb-1">
+            <div class="flex items-center justify-between py-1 trackable-item group"> <div class="flex items-center gap-2 flex-grow min-w-0"> ${t.isTrackable ? 
+                        `<input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleMaterialItem(${materialId}, ${t.id})" class="w-4 h-4 rounded border-purple-300 flex-shrink-0">` : 
+                        '<i data-lucide="chevron-right" class="w-3 h-3 text-[#B266FF] flex-shrink-0"></i>'}
+                    
+                    <textarea 
+                        rows="1" 
+                        oninput="autoExpand(this); updateTopicTitle(${materialId}, ${t.id}, this.value)" 
+                        class="bg-transparent border-none outline-none flex-grow resize-none overflow-hidden p-0 m-0 text-xs ${textStyle} leading-normal"
+                        placeholder="Enter topic..."
+                        style="height: auto; min-height: 1rem;"
+                    >${t.title}</textarea>
+                </div>
+                
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                    <div class="flex flex-col -gap-1 mr-1">
+                        <button onclick="moveTopic(${materialId}, ${t.id}, -1)" class="text-gray-300 hover:text-[#B266FF] transition-colors">
+                            <i data-lucide="chevron-up" class="w-3 h-3"></i>
+                        </button>
+                        <button onclick="moveTopic(${materialId}, ${t.id}, 1)" class="text-gray-300 hover:text-[#B266FF] transition-colors">
+                            <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+
+                    <button onclick="addTopic(${materialId}, ${t.id})" class="text-[9px] text-[#B266FF] font-black uppercase tracking-tighter">+ Sub</button>
+                    <button onclick="deleteTopic(${materialId}, ${t.id})" class="text-red-300 hover:text-red-500">
+                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="nested-topic">
+                ${renderTopicsRecursive(t.subtopics, materialId)}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Add this function to handle the live data updates
+function updateTopicTitle(materialId, topicId, newVal) {
+    const material = materialsData.find(m => m.id === materialId);
+    const findAndUpdate = (list) => {
+        for (let t of list) {
+            if (t.id === topicId) { 
+                t.title = newVal; 
+                return true; 
+            }
+            if (t.subtopics && findAndUpdate(t.subtopics)) return true;
+        }
+    };
+    findAndUpdate(material.topics);
+    // We save to localStorage but DON'T re-render the whole list to prevent losing focus/cursor position
+    localStorage.setItem('bar_materials', JSON.stringify(materialsData));
+}
+
+function toggleMaterialItem(materialId, topicId) {
+    const material = materialsData.find(m => m.id === materialId);
+    let justFinished = false;
+    const findRecursive = (list) => {
+        for (let t of list) {
+            if (t.id === topicId) { 
+                t.done = !t.done; 
+                if(t.done) justFinished = true;
+                return true; 
+            }
+            if (t.subtopics && findRecursive(t.subtopics)) return true;
+        }
+    };
+    findRecursive(material.topics);
+    if(justFinished) createConfetti();
+    saveMaterials();
+}
+
+function deleteMaterial(id) {
+    const mat = materialsData.find(m => m.id === id);
+    showThemedConfirm(
+        "Delete Material", 
+        `Are you sure you want to remove "${mat.name}"? This will delete all tracked progress.`, 
+        () => {
+            materialsData = materialsData.filter(m => m.id !== id);
+            saveMaterials();
+        }
+    );
+}
+
+function saveMaterials() {
+    localStorage.setItem('bar_materials', JSON.stringify(materialsData));
+    renderMaterials();
+}
+
+function deleteTopic(materialId, topicId) {
+    showThemedConfirm(
+        "Delete Topic", 
+        "Remove this topic and all its sub-topics?", 
+        () => {
+            const material = materialsData.find(m => m.id === materialId);
+            const findAndDelete = (list, id) => {
+                const index = list.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    list.splice(index, 1);
+                    return true;
+                }
+                for (let t of list) {
+                    if (t.subtopics && findAndDelete(t.subtopics, id)) return true;
+                }
+            };
+            findAndDelete(material.topics, topicId);
+            saveMaterials(); // Save and refresh UI
+        }
+    );
+}
+
+function moveTopic(materialId, topicId, direction) {
+    const material = materialsData.find(m => m.id === materialId);
+    
+    const findAndMove = (list) => {
+        const index = list.findIndex(t => t.id === topicId);
+        if (index !== -1) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < list.length) {
+                // Swap elements in the array
+                const temp = list[index];
+                list[index] = list[newIndex];
+                list[newIndex] = temp;
+                return true;
+            }
+            return false;
+        }
+        for (let t of list) {
+            if (t.subtopics && findAndMove(t.subtopics)) return true;
+        }
+        return false;
+    };
+
+    if (findAndMove(material.topics)) {
+        saveMaterials(); // This re-renders everything to show the new order
+    }
+}
+function moveMaterial(id, direction) {
+    const index = materialsData.findIndex(m => m.id === id);
+    if (index === -1) return;
+
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < materialsData.length) {
+        // Swap materials in the array
+        const temp = materialsData[index];
+        materialsData[index] = materialsData[newIndex];
+        materialsData[newIndex] = temp;
+        
+        saveMaterials(); // Save to localStorage and refresh the grid
+    }
+}
+
+function toggleCollapse(id, event) {
+    const mat = materialsData.find(m => m.id === id);
+    if (mat) {
+        mat.collapsed = !mat.collapsed;
+        saveMaterials(); // Save the collapsed state to localStorage
+    }
 }
 
 </script>
