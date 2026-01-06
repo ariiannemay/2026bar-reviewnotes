@@ -543,8 +543,8 @@ align-items: center; /* Centers trash icon with text */
 
 <div class="mb-6 px-4">
     <div class="flex justify-between items-end mb-2">
-        <span class="header-font text-xs tracking-widest text-[#330066]">OVERALL NOTES PROGRESS</span>
-        <span id="master-percent-text" class="font-black text-sm text-[#B266FF]">0%</span>
+        <span class="header-font text-lg tracking-widest text-[#330066]">OVERALL NOTES PROGRESS</span>
+        <span id="master-percent-text" class="font-black text-sm text-[#800000]">0%</span>
     </div>
     <div id="master-progress-wrapper">
         <div id="master-progress-fill"></div>
@@ -555,7 +555,7 @@ align-items: center; /* Centers trash icon with text */
     <div class="relative group">
         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#B266FF] transition-colors"></i>
         <input type="text" id="syllabus-search" placeholder="Search topics (e.g. 'Due Process')..." 
-               class="w-full pl-10 pr-4 py-2 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none focus:border-[#B266FF] focus:bg-white transition-all text-sm font-medium"
+               class="header-font w-full pl-10 pr-4 py-2 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none focus:border-[#B266FF] focus:bg-white transition-all text-sm font-medium"
                oninput="handleSyllabusSearch(this.value)">
     </div>
 </div>
